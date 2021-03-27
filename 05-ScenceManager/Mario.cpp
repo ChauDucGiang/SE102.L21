@@ -1,158 +1,238 @@
 #include <algorithm>
 #include <assert.h>
-#include "Utils.h"
-
 #include "Mario.h"
+#include "Utils.h"
 #include "Game.h"
-
-#include "Goomba.h"
 #include "Portal.h"
+#include "PlayScence.h"
+#include "PlayerInfo.h"
+#include "Point.h"
+#include "Enemy.h"
 
 CMario::CMario(float x, float y) : CGameObject()
 {
-	level = MARIO_LEVEL_BIG;
 	untouchable = 0;
-	SetState(MARIO_STATE_IDLE);
+	SetState(YUMETARO_STATE_IDLE);
 
-	start_x = x; 
-	start_y = y; 
-	this->x = x; 
-	this->y = y; 
+	start_x = x;
+	start_y = y;
+	this->x = x;
+	this->y = y;
+
+	bullets = new vector<CBullet*>();
+	for (int i = 0; i < YUMETARO_NUM_BULLETS; i++)
+	{
+		CBullet* bullet = new CBullet();
+		//bullet->SetAnimationSet(ani_set);
+		bullets->push_back(bullet);
+		CGame::GetInstance()->GetCurrentScene()->GetFrontObjs()->push_back(bullet);
+	}
+
+	SetBoundingBox();
 }
 
-void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
+void CMario::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
-	// Calculate dx, dy 
+	// Get others instance
+	CCamera* camera = CCamera::GetInstance();
+	int leftMap = camera->GetLeftMap();
+	int topMap = camera->GetTopMap();
+	int rightMap = camera->GetRightMap();
+	int bottomMap = camera->GetBottomMap();
+	int heightMap = camera->GetHeightMap();
+	CPlayScene* scene = (CPlayScene*)CGame::GetInstance()->GetCurrentScene();
+	
 	CGameObject::Update(dt);
 
 	// Simple fall down
-	vy += MARIO_GRAVITY*dt;
+	if (!CGame::GetInstance()->GetCurrentScene()->GetIsObjStop())
+	{
+		if (isOnTitleScene)
+			vy += YUMETARO_TITLE_SCENE_GRAVITY * dt;
+		else
+			vy += YUMETARO_GRAVITY * dt;
+	}
+
+	// Max jump
+	if (!isOnTitleScene && vy <= -YUMETARO_MAX_Y_SPEED)
+	{
+		vy = -YUMETARO_MAX_Y_SPEED;
+		canJumpHigher = false;
+	}
+
+	// Die
+	if (state == YUMETARO_STATE_DIE)
+	{
+		MoveThrough(OBJ_MOVE_XY);
+
+		if (GetTickCount() - die_start > YUMETARO_DIE_TIME)
+		{
+			CPlayerInfo::GetInstance()->AdjustLife(-LIFE_1);
+			CGame::GetInstance()->SwitchScene(WORLD_MAP_1);
+		}
+		return;
+	}
+
+	// Mario when col edge map
+	if (x <= leftMap)
+		x = leftMap;
+	if (y <= topMap)
+		y = topMap;
+	if (x + YUMETARO_BBOX_WIDTH >= rightMap)
+		x = rightMap - YUMETARO_BBOX_WIDTH;	
+
+	// Intersert with objs
+	for (int i = 0; i < coObjects->size(); i++)
+	{
+		if (AABBCheck(this, coObjects->at(i)))
+		{
+			OnIntersect(coObjects->at(i), coObjects);
+		}
+	}
 
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
 
 	coEvents.clear();
 
-	// turn off collision when die 
-	if (state!=MARIO_STATE_DIE)
+	// Turn off collision when die 
+	if (state != YUMETARO_STATE_DIE)
 		CalcPotentialCollisions(coObjects, coEvents);
 
-	// reset untouchable timer if untouchable time has passed
-	if ( GetTickCount() - untouchable_start > MARIO_UNTOUCHABLE_TIME) 
+	// Reset untouchable timer if untouchable time has passed
+	if (GetTickCount() - untouchable_start > YUMETARO_UNTOUCHABLE_TIME)
 	{
 		untouchable_start = 0;
 		untouchable = 0;
 	}
 
 	// No collision occured, proceed normally
-	if (coEvents.size()==0)
+	if (coEvents.size() == 0)
 	{
-		x += dx; 
-		y += dy;
+		MoveThrough(OBJ_MOVE_XY);
+
+		if (vy != 0)
+		{
+			isOnGround = false;
+			if (vy > 0)
+				canJump = false;
+		}
 	}
 	else
 	{
 		float min_tx, min_ty, nx = 0, ny;
-		float rdx = 0; 
+		float rdx = 0;
 		float rdy = 0;
 
-		// TODO: This is a very ugly designed function!!!!
 		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny, rdx, rdy);
+		colX = nx;
 
-		// how to push back Mario if collides with a moving objects, what if Mario is pushed this way into another object?
-		//if (rdx != 0 && rdx!=dx)
-		//	x += nx*abs(rdx); 
-		
-		// block every object first!
-		x += min_tx*dx + nx*0.4f;
-		y += min_ty*dy + ny*0.4f;
+		x += min_tx * dx + nx * YUMETARO_DEFLECT_SPEED;
+		y += min_ty * dy + ny * YUMETARO_DEFLECT_SPEED;
 
-		if (nx!=0) vx = 0;
-		if (ny!=0) vy = 0;
-
-
-		//
-		// Collision logic with other objects
-		//
+		// Col with objs
 		for (UINT i = 0; i < coEventsResult.size(); i++)
 		{
 			LPCOLLISIONEVENT e = coEventsResult[i];
 
-			if (dynamic_cast<CGoomba *>(e->obj)) // if e->obj is Goomba 
-			{
-				CGoomba *goomba = dynamic_cast<CGoomba *>(e->obj);
+			e->obj->colX = e->nx;
+			e->obj->colY = e->ny;
 
-				// jump on top >> kill Goomba and deflect a bit 
-				if (e->ny < 0)
-				{
-					if (goomba->GetState()!= GOOMBA_STATE_DIE)
-					{
-						goomba->SetState(GOOMBA_STATE_DIE);
-						vy = -MARIO_JUMP_DEFLECT_SPEED;
-					}
-				}
-				else if (e->nx != 0)
-				{
-					if (untouchable==0)
-					{
-						if (goomba->GetState()!=GOOMBA_STATE_DIE)
-						{
-							if (level > MARIO_LEVEL_SMALL)
-							{
-								level = MARIO_LEVEL_SMALL;
-								StartUntouchable();
-							}
-							else 
-								SetState(MARIO_STATE_DIE);
-						}
-					}
-				}
-			} // if Goomba
-			else if (dynamic_cast<CPortal *>(e->obj))
+			// Stand on obj
+			if (ny < 0 && e->obj != NULL)
 			{
-				CPortal *p = dynamic_cast<CPortal *>(e->obj);
-				CGame::GetInstance()->SwitchScene(p->GetSceneId());
+				// Disable mutiScore
+				if (canMultiScoreJump && isOnGround)
+				{
+					canMultiScoreJump = false;
+					pointFactor = 0;
+				}
+				// Stand-Y
+				if (state != YUMETARO_STATE_DIE)
+					PreventMoveY(e->obj);
 			}
-		}
-	}
 
-	// clean up collision events
-	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
+			// Logic with jump
+			if (ny < 0 && vy >= 0)
+			{
+				isOnGround = true;
+				if (canRepeatJump)
+				{
+					canJump = true;
+					canJumpHigher = true;
+				}
+				else
+				{
+					canJump = false;
+					canJumpHigher = false;
+				}
+			}
+			// Head hit objs
+			else if (ny > 0 && !dynamic_cast<CBullet*>(e->obj))
+			{
+				vy = 0;
+				canJump = false;
+				canJumpHigher = false;
+			}
+
+			if (dynamic_cast<CEnemy*>(e->obj))
+			{
+				canJump = true;
+				canJumpHigher = true;
+			}
+						
+			// Bullet
+			else if (dynamic_cast<CBullet*>(e->obj))
+			{
+				MoveThrough(OBJ_MOVE_XY);
+
+				/*CBullet* bullet = dynamic_cast<CBullet*>(e->obj);
+
+				if (bullet->isEnemy)
+				{
+					Hurt();
+				}*/
+			}		
+			
+			// Portal
+			else if (dynamic_cast<CPortal*>(e->obj))
+			{
+				CPortal* p = dynamic_cast<CPortal*>(e->obj);			
+			}			
+		}
+		// Clean up collision events
+		for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
+	}
 }
 
 void CMario::Render()
 {
-	int ani = -1;
-	if (state == MARIO_STATE_DIE)
-		ani = MARIO_ANI_DIE;
-	else
-	if (level == MARIO_LEVEL_BIG)
-	{
-		if (vx == 0)
-		{
-			if (nx>0) ani = MARIO_ANI_BIG_IDLE_RIGHT;
-			else ani = MARIO_ANI_BIG_IDLE_LEFT;
-		}
-		else if (vx > 0) 
-			ani = MARIO_ANI_BIG_WALKING_RIGHT; 
-		else ani = MARIO_ANI_BIG_WALKING_LEFT;
-	}
-	else if (level == MARIO_LEVEL_SMALL)
-	{
-		if (vx == 0)
-		{
-			if (nx>0) ani = MARIO_ANI_SMALL_IDLE_RIGHT;
-			else ani = MARIO_ANI_SMALL_IDLE_LEFT;
-		}
-		else if (vx > 0)
-			ani = MARIO_ANI_SMALL_WALKING_RIGHT;
-		else ani = MARIO_ANI_SMALL_WALKING_LEFT;
-	}
+	int ani = -1;	
 
 	int alpha = 255;
 	if (untouchable) alpha = 128;
 
-	animation_set->at(ani)->Render(x, y, alpha);
+	if (nx > 0)
+		xReverse = false;
+	else if (nx < 0)
+		xReverse = true;
+	
+	switch (state)
+	{
+	case YUMETARO_STATE_IDLE:
+		ani = YUMETARO_ANI_IDLE;
+		break;
+	case YUMETARO_STATE_WALK:
+		ani = YUMETARO_ANI_WALK;
+		break;
+	case YUMETARO_STATE_JUMP:
+		ani = YUMETARO_ANI_JUMP;
+		break;
+	default:
+		break;
+	}
+
+	animation_set->at(ani)->Render(x, y, xReverse, yReverse, false, alpha);
 
 	RenderBoundingBox();
 }
@@ -162,43 +242,40 @@ void CMario::SetState(int state)
 	CGameObject::SetState(state);
 
 	switch (state)
-	{
-	case MARIO_STATE_WALKING_RIGHT:
-		vx = MARIO_WALKING_SPEED;
-		nx = 1;
-		break;
-	case MARIO_STATE_WALKING_LEFT: 
-		vx = -MARIO_WALKING_SPEED;
-		nx = -1;
-		break;
-	case MARIO_STATE_JUMP:
-		// TODO: need to check if Mario is *current* on a platform before allowing to jump again
-		vy = -MARIO_JUMP_SPEED_Y;
-		break; 
-	case MARIO_STATE_IDLE: 
+	{	
+	case YUMETARO_STATE_IDLE:
 		vx = 0;
 		break;
-	case MARIO_STATE_DIE:
-		vy = -MARIO_DIE_DEFLECT_SPEED;
-		break;
+	case YUMETARO_STATE_DIE:
+		vx = 0;
+		vy = -YUMETARO_DIE_DEFLECT_SPEED;
+		die_start = GetTickCount();
+		break;	
 	}
 }
 
-void CMario::GetBoundingBox(float &left, float &top, float &right, float &bottom)
+void CMario::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 {
 	left = x;
-	top = y; 
+	top = y;
+	right = left + YUMETARO_BBOX_WIDTH;
+	bottom = top + YUMETARO_BBOX_HEIGHT;
+	
+	CGameObject::GetBoundingBox(left, top, right, bottom);
+}
 
-	if (level==MARIO_LEVEL_BIG)
-	{
-		right = x + MARIO_BIG_BBOX_WIDTH;
-		bottom = y + MARIO_BIG_BBOX_HEIGHT;
-	}
-	else
-	{
-		right = x + MARIO_SMALL_BBOX_WIDTH;
-		bottom = y + MARIO_SMALL_BBOX_HEIGHT;
-	}
+void CMario::SetBoundingBox()
+{
+	left = x;
+	top = y;
+	right = left + YUMETARO_BBOX_WIDTH;
+	bottom = top + YUMETARO_BBOX_HEIGHT;
+}
+
+void CMario::AddPointFactor()
+{
+	if (canMultiScoreJump || canMultiScoreLand)
+		pointFactor++;
 }
 
 /*
@@ -206,9 +283,69 @@ void CMario::GetBoundingBox(float &left, float &top, float &right, float &bottom
 */
 void CMario::Reset()
 {
-	SetState(MARIO_STATE_IDLE);
-	SetLevel(MARIO_LEVEL_BIG);
+	SetState(YUMETARO_STATE_IDLE);
 	SetPosition(start_x, start_y);
 	SetSpeed(0, 0);
+	canJump = true;
+	canJumpHigher = true;
 }
 
+void CMario::Hurt()
+{
+	//if (untouchable == 0)
+	//{
+	//	if (isOnTitleScene)
+	//	{
+	//		// Transform, stop other objs
+	//		isTransform = true;
+	//		SetState(YUMETARO_STATE_IDLE);
+	//		level = YUMETARO_LEVEL_SMALL;
+	//		y += YUMETARO_BIG_BBOX_HEIGHT - YUMETARO_SMALL_BBOX_HEIGHT;
+	//		transform_start = GetTickCount();
+	//		CGame::GetInstance()->GetCurrentScene()->SetObjStop(true);
+	//		StartUntouchable();
+	//	}
+	//	else
+	//	{
+	//		if (level > YUMETARO_LEVEL_BIG)
+	//		{
+	//			// Transform, stop other objs
+	//			isTransform = true;
+	//			SetState(YUMETARO_STATE_IDLE);
+	//			level = YUMETARO_LEVEL_BIG;
+	//			transform_start = GetTickCount();
+	//			CGame::GetInstance()->GetCurrentScene()->SetObjStop(true);
+	//			StartUntouchable();
+	//		}
+	//		else if (level > YUMETARO_LEVEL_SMALL)
+	//		{
+	//			// Transform, stop other objs
+	//			isTransform = true;
+	//			SetState(YUMETARO_STATE_IDLE);
+	//			level = YUMETARO_LEVEL_SMALL;
+	//			y += YUMETARO_BIG_BBOX_HEIGHT - YUMETARO_SMALL_BBOX_HEIGHT;
+	//			transform_start = GetTickCount();
+	//			CGame::GetInstance()->GetCurrentScene()->SetObjStop(true);
+	//			StartUntouchable();
+	//		}
+	//		else
+	//			SetState(YUMETARO_STATE_DIE);
+	//	}
+	//}
+}
+
+void CMario::OnIntersect(CGameObject* obj, vector<LPGAMEOBJECT>* coObjs)
+{	
+	if (obj != NULL && !obj->isDie && canHit)
+	{		
+		// Bullet Enemy
+		if (dynamic_cast<CBullet*>(obj))
+		{
+			CBullet* bullet = dynamic_cast<CBullet*>(obj);
+			if (bullet->isEnemy)
+			{
+				Hurt();
+			}
+		}		
+	}
+}

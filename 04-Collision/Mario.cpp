@@ -12,7 +12,7 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
 	CGameObject::Update(dt);
 
 	// Simple fall down
-	vy += MARIO_GRAVITY*dt;
+	vy += YUMETARO_GRAVITY*dt;
 
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
@@ -20,11 +20,11 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
 	coEvents.clear();
 
 	// turn off collision when die 
-	if (state!=MARIO_STATE_DIE)
+	if (state!=YUMETARO_STATE_DIE)
 		CalcPotentialCollisions(coObjects, coEvents);
 
 	// reset untouchable timer if untouchable time has passed
-	if ( GetTickCount() - untouchable_start > MARIO_UNTOUCHABLE_TIME) 
+	if ( GetTickCount() - untouchable_start > YUMETARO_UNTOUCHABLE_TIME) 
 	{
 		untouchable_start = 0;
 		untouchable = 0;
@@ -64,7 +64,7 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
 					if (goomba->GetState()!= GOOMBA_STATE_DIE)
 					{
 						goomba->SetState(GOOMBA_STATE_DIE);
-						vy = -MARIO_JUMP_DEFLECT_SPEED;
+						vy = -YUMETARO_JUMP_DEFLECT_SPEED;
 					}
 				}
 				else if (e->nx != 0)
@@ -73,13 +73,13 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
 					{
 						if (goomba->GetState()!=GOOMBA_STATE_DIE)
 						{
-							if (level > MARIO_LEVEL_SMALL)
+							if (level > YUMETARO_LEVEL_SMALL)
 							{
-								level = MARIO_LEVEL_SMALL;
+								level = YUMETARO_LEVEL_SMALL;
 								StartUntouchable();
 							}
 							else 
-								SetState(MARIO_STATE_DIE);
+								SetState(YUMETARO_STATE_DIE);
 						}
 					}
 				}
@@ -94,30 +94,30 @@ void CMario::Update(DWORD dt, vector<LPGAMEOBJECT> *coObjects)
 void CMario::Render()
 {
 	int ani;
-	if (state == MARIO_STATE_DIE)
-		ani = MARIO_ANI_DIE;
+	if (state == YUMETARO_STATE_DIE)
+		ani = YUMETARO_ANI_DIE;
 	else
-	if (level == MARIO_LEVEL_BIG)
+	if (level == YUMETARO_LEVEL_BIG)
 	{
 		if (vx == 0)
 		{
-			if (nx>0) ani = MARIO_ANI_BIG_IDLE_RIGHT;
-			else ani = MARIO_ANI_BIG_IDLE_LEFT;
+			if (nx>0) ani = YUMETARO_ANI_BIG_IDLE_RIGHT;
+			else ani = YUMETARO_ANI_BIG_IDLE_LEFT;
 		}
 		else if (vx > 0) 
-			ani = MARIO_ANI_BIG_WALKING_RIGHT; 
-		else ani = MARIO_ANI_BIG_WALKING_LEFT;
+			ani = YUMETARO_ANI_BIG_WALKING_RIGHT; 
+		else ani = YUMETARO_ANI_BIG_WALKING_LEFT;
 	}
-	else if (level == MARIO_LEVEL_SMALL)
+	else if (level == YUMETARO_LEVEL_SMALL)
 	{
 		if (vx == 0)
 		{
-			if (nx>0) ani = MARIO_ANI_SMALL_IDLE_RIGHT;
-			else ani = MARIO_ANI_SMALL_IDLE_LEFT;
+			if (nx>0) ani = YUMETARO_ANI_SMALL_IDLE_RIGHT;
+			else ani = YUMETARO_ANI_SMALL_IDLE_LEFT;
 		}
 		else if (vx > 0)
-			ani = MARIO_ANI_SMALL_WALKING_RIGHT;
-		else ani = MARIO_ANI_SMALL_WALKING_LEFT;
+			ani = YUMETARO_ANI_SMALL_WALKING_RIGHT;
+		else ani = YUMETARO_ANI_SMALL_WALKING_LEFT;
 	}
 
 	int alpha = 255;
@@ -133,21 +133,21 @@ void CMario::SetState(int state)
 
 	switch (state)
 	{
-	case MARIO_STATE_WALKING_RIGHT:
-		vx = MARIO_WALKING_SPEED;
+	case YUMETARO_STATE_WALKING_RIGHT:
+		vx = YUMETARO_WALKING_SPEED;
 		nx = 1;
 		break;
-	case MARIO_STATE_WALKING_LEFT: 
-		vx = -MARIO_WALKING_SPEED;
+	case YUMETARO_STATE_WALKING_LEFT: 
+		vx = -YUMETARO_WALKING_SPEED;
 		nx = -1;
 		break;
-	case MARIO_STATE_JUMP: 
-		vy = -MARIO_JUMP_SPEED_Y;
-	case MARIO_STATE_IDLE: 
+	case YUMETARO_STATE_JUMP_HIGH_LEFT: 
+		vy = -YUMETARO_JUMP_HIGH_SPEED_Y;
+	case YUMETARO_STATE_IDLE: 
 		vx = 0;
 		break;
-	case MARIO_STATE_DIE:
-		vy = -MARIO_DIE_DEFLECT_SPEED;
+	case YUMETARO_STATE_DIE:
+		vy = -YUMETARO_DIE_DEFLECT_SPEED;
 		break;
 	}
 }
@@ -157,15 +157,15 @@ void CMario::GetBoundingBox(float &left, float &top, float &right, float &bottom
 	left = x;
 	top = y; 
 
-	if (level==MARIO_LEVEL_BIG)
+	if (level==YUMETARO_LEVEL_BIG)
 	{
-		right = x + MARIO_BIG_BBOX_WIDTH;
-		bottom = y + MARIO_BIG_BBOX_HEIGHT;
+		right = x + YUMETARO_BIG_BBOX_WIDTH;
+		bottom = y + YUMETARO_BIG_BBOX_HEIGHT;
 	}
 	else
 	{
-		right = x + MARIO_SMALL_BBOX_WIDTH;
-		bottom = y + MARIO_SMALL_BBOX_HEIGHT;
+		right = x + YUMETARO_SMALL_BBOX_WIDTH;
+		bottom = y + YUMETARO_SMALL_BBOX_HEIGHT;
 	}
 }
 

@@ -14,24 +14,20 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
-
 #include "Utils.h"
 #include "Game.h"
 #include "GameObject.h"
 #include "Textures.h"
-
 #include "Mario.h"
-#include "Brick.h"
-#include "Goomba.h"
-
 #include "PlayScence.h"
+#include "Constants.h"
 
 #define WINDOW_CLASS_NAME L"SampleWindow"
 #define MAIN_WINDOW_TITLE L"SAMPLE 05 - SCENCE MANAGER"
 
-#define BACKGROUND_COLOR D3DCOLOR_XRGB(255, 255, 200)
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
+#define BACKGROUND_COLOR D3DCOLOR_XRGB(0, 0, 0)
+//#define SCREEN_WIDTH 320
+//#define SCREEN_HEIGHT 240
 
 #define MAX_FRAME_RATE 120
 
@@ -179,7 +175,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	game->Init(hWnd);
 	game->InitKeyboard();
 
-	game->Load(L"mario-sample.txt");
+	game->Load(L"gimmick.txt");
 
 	SetWindowPos(hWnd, 0, 0, 0, SCREEN_WIDTH*2, SCREEN_HEIGHT*2, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 

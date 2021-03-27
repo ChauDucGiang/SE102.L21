@@ -25,7 +25,7 @@
 #define WINDOW_ICON_PATH L"brick.ico"
 
 #define BRICK_TEXTURE_PATH L"brick.png"
-#define MARIO_TEXTURE_PATH L"mario.png"
+#define YUMETARO_TEXTURE_PATH L"mario.png"
 
 #define BACKGROUND_COLOR D3DCOLOR_XRGB(0, 0, 0)
 #define SCREEN_WIDTH 640
@@ -35,9 +35,9 @@
 using namespace std;
 
 CMario *mario;
-#define MARIO_START_X 10.0f
-#define MARIO_START_Y 130.0f
-#define MARIO_START_VX 0.1f
+#define YUMETARO_START_X 10.0f
+#define YUMETARO_START_Y 130.0f
+#define YUMETARO_START_VX 0.1f
 
 CGameObject *brick;
 #define BRICK_X 10.0f
@@ -68,9 +68,9 @@ void LoadResources()
 {
 	CGame * game = CGame::GetInstance();
 	texBrick = game->LoadTexture(BRICK_TEXTURE_PATH);
-	texMario = game->LoadTexture(MARIO_TEXTURE_PATH);
+	texMario = game->LoadTexture(YUMETARO_TEXTURE_PATH);
 
-	mario = new CMario(MARIO_START_X, MARIO_START_Y, MARIO_START_VX, texMario);
+	mario = new CMario(YUMETARO_START_X, YUMETARO_START_Y, YUMETARO_START_VX, texMario);
 	brick = new CGameObject(BRICK_X, BRICK_Y, texBrick);
 }
 

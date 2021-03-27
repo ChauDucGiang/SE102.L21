@@ -3,7 +3,7 @@
 #include <Windows.h>
 
 #include <signal.h>
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>

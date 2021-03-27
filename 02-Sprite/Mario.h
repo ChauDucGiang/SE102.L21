@@ -2,7 +2,7 @@
 
 #include "GameObject.h"
 
-#define MARIO_WIDTH 14
+#define YUMETARO_WIDTH 14
 
 class CMario : public CGameObject
 {

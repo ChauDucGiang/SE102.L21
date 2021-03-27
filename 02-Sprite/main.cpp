@@ -35,9 +35,9 @@
 #define ID_TEX_MISC 20
 
 CMario *mario;
-#define MARIO_START_X 10.0f
-#define MARIO_START_Y 130.0f
-#define MARIO_START_VX 0.1f
+#define YUMETARO_START_X 10.0f
+#define YUMETARO_START_Y 130.0f
+#define YUMETARO_START_VX 0.1f
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -110,7 +110,7 @@ void LoadResources()
 	animations->Add(510, ani);
 	*/
 	
-	mario = new CMario(MARIO_START_X, MARIO_START_Y, MARIO_START_VX);
+	mario = new CMario(YUMETARO_START_X, YUMETARO_START_Y, YUMETARO_START_VX);
 }
 
 /*

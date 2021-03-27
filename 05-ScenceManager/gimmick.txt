@@ -1,0 +1,8 @@
+[SETTINGS]
+start	1
+#scene list
+[SCENES]
+0	scenes\titlescene.txt
+1	scenes\scene1.txt
+2	scenes\scene1-4.txt
+100	scenes\world1.txt

@@ -24,15 +24,15 @@ CGameObject::~CGameObject()
 	if (texture != NULL) texture->Release();
 }
 
-#define MARIO_VX 0.1f
-#define MARIO_WIDTH 14
+#define YUMETARO_VX 0.1f
+#define YUMETARO_WIDTH 14
 
 void CMario::Update(DWORD dt)
 {
 	x += vx*dt;
 
 	int BackBufferWidth = CGame::GetInstance()->GetBackBufferWidth();
-	if (x <= 0 || x >= BackBufferWidth - MARIO_WIDTH) {
+	if (x <= 0 || x >= BackBufferWidth - YUMETARO_WIDTH) {
 		
 		vx = -vx;
 
@@ -40,9 +40,9 @@ void CMario::Update(DWORD dt)
 		{
 			x = 0;
 		}
-		else if (x >= BackBufferWidth - MARIO_WIDTH)
+		else if (x >= BackBufferWidth - YUMETARO_WIDTH)
 		{
-			x = (float)(BackBufferWidth - MARIO_WIDTH);
+			x = (float)(BackBufferWidth - YUMETARO_WIDTH);
 		}
 	}
 }
