@@ -1,5 +1,4 @@
 #include "Bullet.h"
-#include "Mario.h"
 #include "PlayScence.h"
 
 CBullet::CBullet()
@@ -20,9 +19,9 @@ void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	MoveThrough(OBJ_MOVE_XY);
 	
-	CMario* mario = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
-	float distanceX = abs((x + BULLET_BBOX_WIDTH / 2) - (mario->x + YUMETARO_BBOX_WIDTH / 2));
-	float distanceY = ((y + BULLET_BBOX_HEIGHT / 2) - (mario->y + YUMETARO_BBOX_HEIGHT / 2));
+	CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
+	float distanceX = abs((x + BULLET_BBOX_WIDTH / 2) - (yumetaro->x + YUMETARO_BBOX_WIDTH / 2));
+	float distanceY = ((y + BULLET_BBOX_HEIGHT / 2) - (yumetaro->y + YUMETARO_BBOX_HEIGHT / 2));
 
 	// Get others instance
 	CCamera* camera = CCamera::GetInstance();

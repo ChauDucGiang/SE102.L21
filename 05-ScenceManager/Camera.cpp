@@ -43,10 +43,10 @@ void CCamera::Update(DWORD dt)
 	{
 	case MAP_1_1:
 	{
-		// Update camera to follow mario
+		// Update camera to follow yumetaro
 		float cx, cy;
-		CMario* mario = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
-		mario->GetPosition(cx, cy);
+		CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
+		yumetaro->GetPosition(cx, cy);
 		SetPosition(cx, 310);		
 	}
 	break;
@@ -56,10 +56,10 @@ void CCamera::Update(DWORD dt)
 			position.x += CAMERA_X_SPEED * dt;
 		else
 		{
-			// Update camera to follow mario
+			// Update camera to follow yumetaro
 			float cx, cy;
-			CMario* mario = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
-			mario->GetPosition(cx, cy);
+			CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
+			yumetaro->GetPosition(cx, cy);
 			SetPosition(cx, cy);
 		}
 	}
@@ -128,8 +128,8 @@ void CCamera::SetIsMoving(bool isMoving)
 {
 	this->isMoving = isMoving;
 	float cx, cy;
-	CMario* mario = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
-	mario->GetPosition(cx, cy);
+	CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
+	yumetaro->GetPosition(cx, cy);
 	SetPosition(cx, cy);
 }
 

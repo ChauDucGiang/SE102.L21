@@ -1,7 +1,7 @@
 #pragma once
 #include "GameObject.h"
 #include "Font.h"
-#include"Mario.h"
+#include "Yumetaro.h"
 // BBox
 #define FONT_BBOX_WIDTH						8
 #define HUD_BBOX_HEIGHT						58
@@ -60,7 +60,7 @@ class CHud : public CGameObject
 	int time = 0;
 	int timeRemain = 0;
 	int power = 0;
-	CMario* mario = NULL;
+	CYumetaro *yumetaro = NULL;
 
 	LPSPRITE hud;
 	LPSPRITE cardsHud;
@@ -83,7 +83,6 @@ public:
 
 	void Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects = NULL);
 	void Render();
-
 	void EndScene();
 };
 

@@ -21,7 +21,7 @@ CHud::CHud()
 	filledPowerArrowAni = CAnimations::GetInstance()->Get(ANIMATION_FILLED_POWER_ARROW_ID);
 
 	if (CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_1_1 || CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_1_4)
-		mario = ((CPlayScene*)(CGame::GetInstance()->GetCurrentScene()))->GetPlayer();
+		yumetaro = ((CPlayScene*)(CGame::GetInstance()->GetCurrentScene()))->GetPlayer();
 
 	for (int i = 0; i < MAX_POWER_STACK; i++)
 	{
@@ -61,9 +61,9 @@ void CHud::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		timeRemain = START_TIME - time / 1000;
 	}
 
-	if (mario != NULL)
+	if (yumetaro != NULL)
 	{
-		power = mario->GetPower();
+		power = yumetaro->GetPower();
 	}
 
 	string lifeStr = to_string(CPlayerInfo::GetInstance()->GetLife());

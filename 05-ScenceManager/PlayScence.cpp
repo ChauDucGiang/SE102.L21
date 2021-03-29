@@ -31,7 +31,7 @@ CPlayScene::CPlayScene(int id, LPCWSTR filePath) :
 #define SCENE_SECTION_MAP				7
 #define SCENE_SECTION_GRID				8
 
-#define OBJECT_TYPE_MARIO				0
+#define OBJECT_TYPE_YUMETARO			0
 #define OBJECT_TYPE_GROUND				5
 
 #define OBJECT_TYPE_PORTAL				50
@@ -157,14 +157,14 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 
 	switch (object_type)
 	{
-	case OBJECT_TYPE_MARIO:
+	case OBJECT_TYPE_YUMETARO:
 		if (player != NULL)
 		{
 			DebugOut(L"[ERROR] MARIO object was created before!\n");
 			return;
 		}
-		obj = new CMario(x, y);
-		player = (CMario*)obj;		
+		obj = new CYumetaro(x, y);
+		player = (CYumetaro*)obj;
 
 		DebugOut(L"[INFO] Player object created!\n");
 		break;	
@@ -203,7 +203,7 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		if (ani_set_id != -1)
 			obj->SetAnimationSet(ani_set);
 
-		if (!dynamic_cast<CMario*>(obj))
+		if (!dynamic_cast<CYumetaro*>(obj))
 			objects.push_back(obj);
 	}
 	if (player != NULL)
@@ -357,7 +357,7 @@ void CPlayScene::Update(DWORD dt)
 	for (size_t i = 0; i < viewObjs.size(); i++)
 	{
 		/*if (i == 2) continue;*/
-		if (dynamic_cast<CMario*>(viewObjs.at(i)))
+		if (dynamic_cast<CYumetaro*>(viewObjs.at(i)))
 			continue;
 		if (viewObjs[i]->isActive && viewObjs[i]->isInGrid && !viewObjs[i]->isDie && !viewObjs[i]->isDead)
 			coObjects.push_back(viewObjs[i]);
@@ -429,7 +429,7 @@ void CPlayScene::Render()
 	{
 		if (viewObjs[i]->isActive && viewObjs[i]->isInGrid && !viewObjs[i]->isDead)
 		{
-			if (dynamic_cast<CMario*>(viewObjs[i]))
+			if (dynamic_cast<CYumetaro*>(viewObjs[i]))
 				continue;
 			viewObjs[i]->Render();
 		}
@@ -526,8 +526,8 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	/*DebugOut(L"[KEYDOWN] KeyDown: %d\n", KeyCode);*/
 	CTileMap* map = ((CPlayScene*)scence)->GetMap();
 	CCamera* camera = CCamera::GetInstance();
-	CMario* mario = ((CPlayScene*)scence)->GetPlayer();
-	if (mario->state == YUMETARO_STATE_DIE) return;
+	CYumetaro* yumetaro = ((CPlayScene*)scence)->GetPlayer();
+	if (yumetaro->state == YUMETARO_STATE_DIE) return;
 
 	switch (KeyCode)
 	{
@@ -545,9 +545,9 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 			break;
 		}
 		break;
-	case DIK_C:
+	/*case DIK_C:
 		CGame::GetInstance()->SwitchScene(WORLD_MAP_1);
-		break;
+		break;*/
 	case DIK_V:
 		CGame::GetInstance()->SwitchScene(TITLE_SCREEN);
 		CCamera::GetInstance()->SetPosition(CGame::GetInstance()->GetScreenWidth() / 2, CGame::GetInstance()->GetScreenHeight() / 2);
@@ -678,21 +678,21 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		}
 		break;
 	case DIK_S:
-		if (mario->canJump)
-			mario->vy = -YUMETARO_JUMP_Y_SPEED;
-		mario->canRepeatJump = false;
+		if (yumetaro->canJump)
+			yumetaro->vy = -YUMETARO_JUMP_Y_SPEED;
+		yumetaro->canRepeatJump = false;
 		//mario->canJump = false;		
 		break;
 	case DIK_A:
-		mario->canHold = true;
+		yumetaro->canHold = true;
 		
-		if (mario->canAttack)
+		if (yumetaro->canAttack)
 		{
 			
 		}
 		break;	
 	case DIK_R:
-		mario->Reset();
+		yumetaro->Reset();
 		break;	
 	}
 }
@@ -700,22 +700,21 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 {
 	/*DebugOut(L"[KEYUP] KeyUp: %d\n", KeyCode);*/
-
 	CGame* game = CGame::GetInstance();
-	CMario* mario = ((CPlayScene*)scence)->GetPlayer();
-	if (mario->state == YUMETARO_STATE_DIE) return;
+	CYumetaro* yumetaro = ((CPlayScene*)scence)->GetPlayer();
+	if (yumetaro->state == YUMETARO_STATE_DIE) return;
 
 	switch (KeyCode)
 	{
 	case DIK_DOWN:
-		if (!mario->canAttack)
-			mario->canAttack = true;
+		if (!yumetaro->canAttack)
+			yumetaro->canAttack = true;
 		break;
 	case DIK_X:
 		break;
 	case DIK_S:
-		mario->canJump = false;
-		mario->canRepeatJump = true;
+		yumetaro->canJump = false;
+		yumetaro->canRepeatJump = true;
 		break;	
 	}
 }
@@ -723,70 +722,68 @@ void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 void CPlayScenceKeyHandler::KeyState(BYTE* states)
 {
 	CGame* game = CGame::GetInstance();
-	CMario* mario = ((CPlayScene*)scence)->GetPlayer();
-	int state = mario->GetState();
+	CYumetaro* yumetaro = ((CPlayScene*)scence)->GetPlayer();
+	int state = yumetaro->GetState();
 
 	// Disable control key when Mario die 
-	if (state == YUMETARO_STATE_DIE)
+	if (state == YUMETARO_STATE_DIE) {
 		return;
-
-	// Key Right
-	if (game->IsKeyDown(DIK_RIGHT))
-	{
-		mario->nx = 1;
+	}
+	if (game->IsKeyDown(DIK_RIGHT)) {
+		yumetaro->nx = 1;
 		// Increase speed
-		if (mario->vx < YUMETARO_WALKING_SPEED)
-			mario->vx += YUMETARO_INCREASE_X_SPEED;
-		
+		if (yumetaro->vx < YUMETARO_WALKING_SPEED)
+			yumetaro->vx += YUMETARO_INCREASE_X_SPEED;
+
 		// Skid
-		if (mario->vx < 0 && mario->vx < -YUMETARO_CAN_SKID_X_SPEED && mario->isOnGround && !mario->isHold)
+		if (yumetaro->vx < 0 && yumetaro->vx < -YUMETARO_CAN_SKID_X_SPEED && yumetaro->isOnGround && !yumetaro->isHold)
 		{
-			
+
 		}
-		else if (mario->vx >= 0 && mario->isOnGround)
-			mario->SetState(YUMETARO_STATE_WALK);		
+		else if (yumetaro->vx >= 0 && yumetaro->isOnGround)
+			yumetaro->SetState(YUMETARO_STATE_WALK);
 	}
 	// Key Left
 	else if (game->IsKeyDown(DIK_LEFT))
 	{
-		mario->nx = -1;
+		yumetaro->nx = -1;
 		// Increase speed
-		if (mario->vx > -YUMETARO_WALKING_SPEED)
-			mario->vx -= YUMETARO_INCREASE_X_SPEED;
+		if (yumetaro->vx > -YUMETARO_WALKING_SPEED)
+			yumetaro->vx -= YUMETARO_INCREASE_X_SPEED;
 		
 		// Skid
-		if (mario->vx > 0 && mario->vx > YUMETARO_CAN_SKID_X_SPEED && mario->isOnGround && !mario->isHold)
+		if (yumetaro->vx > 0 && yumetaro->vx > YUMETARO_CAN_SKID_X_SPEED && yumetaro->isOnGround && !yumetaro->isHold)
 		{			
 		}
-		else if (mario->vx <= 0 && mario->isOnGround)
-			mario->SetState(YUMETARO_STATE_WALK);		
+		else if (yumetaro->vx <= 0 && yumetaro->isOnGround)
+			yumetaro->SetState(YUMETARO_STATE_WALK);
 	}	
 	// When release key Right/Left
-	else if (mario->isOnGround && mario->kick_start == 0 && mario->tail_start == 0)
+	else if (yumetaro->isOnGround && yumetaro->kick_start == 0 && yumetaro->tail_start == 0)
 	{		
-		if (mario->nx > 0)
+		if (yumetaro->nx > 0)
 		{
-			mario->SetState(YUMETARO_STATE_WALK);
-			mario->vx -= YUMETARO_DECREASE_X_SPEED;
-			if (mario->vx <= 0)
-				mario->SetState(YUMETARO_STATE_IDLE);
+			yumetaro->SetState(YUMETARO_STATE_WALK);
+			yumetaro->vx -= YUMETARO_DECREASE_X_SPEED;
+			if (yumetaro->vx <= 0)
+				yumetaro->SetState(YUMETARO_STATE_IDLE);
 		}
-		if (mario->nx < 0)
+		if (yumetaro->nx < 0)
 		{
-			mario->SetState(YUMETARO_STATE_WALK);
-			mario->vx += YUMETARO_DECREASE_X_SPEED;
-			if (mario->vx >= 0)
-				mario->SetState(YUMETARO_STATE_IDLE);
+			yumetaro->SetState(YUMETARO_STATE_WALK);
+			yumetaro->vx += YUMETARO_DECREASE_X_SPEED;
+			if (yumetaro->vx >= 0)
+				yumetaro->SetState(YUMETARO_STATE_IDLE);
 		}		
 	}
 
 	// Key S handle jump
-	if (game->IsKeyDown(DIK_S) && mario->canJump)
+	if (game->IsKeyDown(DIK_S) && yumetaro->canJump)
 	{
-		if (mario->canJumpHigher)
+		if (yumetaro->canJumpHigher)
 		{
-			mario->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
+			yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
 		}		
-		mario->SetState(YUMETARO_STATE_JUMP);
+		yumetaro->SetState(YUMETARO_STATE_JUMP);
 	}	
 }

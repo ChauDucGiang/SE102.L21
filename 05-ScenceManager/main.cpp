@@ -18,12 +18,11 @@
 #include "Game.h"
 #include "GameObject.h"
 #include "Textures.h"
-#include "Mario.h"
 #include "PlayScence.h"
 #include "Constants.h"
 
-#define WINDOW_CLASS_NAME L"SampleWindow"
-#define MAIN_WINDOW_TITLE L"SAMPLE 05 - SCENCE MANAGER"
+#define WINDOW_CLASS_NAME L"Mr.Gimmick"
+#define MAIN_WINDOW_TITLE L"Mr.Gimmick"
 
 #define BACKGROUND_COLOR D3DCOLOR_XRGB(0, 0, 0)
 //#define SCREEN_WIDTH 320

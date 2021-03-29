@@ -1,5 +1,4 @@
 #include "PlayerInfo.h"
-#include "Mario.h"
 
 CPlayerInfo* CPlayerInfo::__instance = NULL;
 

@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <d3dx9.h>
 #include "Game.h"
-#include "Mario.h"
 #include "Constants.h"
 
 #define CAMERA_X_SPEED		0.03f

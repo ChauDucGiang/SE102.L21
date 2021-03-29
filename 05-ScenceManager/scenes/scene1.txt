@@ -1234,9 +1234,9 @@ ani_id	sprite1_id	time1	sprite2_id	time2
 # type	id	x	y	ani_set_id	extra_settings per object type
 # type: 0 = Mario , 1 = Brick, 2 = Goomba, 4 = Box
 
-# === MARIO
+# === YUMETARO
 #0	-1	10	0	2
-0	-1	10	0	50
+0	-1	50	0	50	
 
 # === GROUND
 #5	999	0	350	-1	2800	370	0

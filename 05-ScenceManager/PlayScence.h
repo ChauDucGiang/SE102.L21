@@ -2,16 +2,16 @@
 #include "Game.h"
 #include "Textures.h"
 #include "Scence.h"
-#include "Mario.h"
 #include "Ground.h"
 #include "TileMap.h"
 #include "Hud.h"
 #include "Grid.h"
+#include "Yumetaro.h"
 
 class CPlayScene: public CScene
 {
 protected: 
-	CMario *player = NULL;					// A play scene has to have player, right?
+	CYumetaro *player = NULL;					// A play scene has to have player, right?
 	//vector<LPGAMEOBJECT> objects;
 	CTileMap* map = NULL;
 	CGrid* grid = NULL;
@@ -45,7 +45,7 @@ public:
 	// Cập nhật vị trí camera khi đụng biên map và khi Mario di chuyển // Chưa dùng đến
 	//void UpdateCamera(int mapWidth, int mapHeight);
 
-	CMario * GetPlayer() { return player; }
+	CYumetaro* GetPlayer() { return player; }
 	CTileMap* GetMap() { return map; }
 	CGrid* GetGrid() { return grid; }
 
