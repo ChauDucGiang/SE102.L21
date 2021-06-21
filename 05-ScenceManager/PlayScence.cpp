@@ -9,6 +9,8 @@
 #include "TileMap.h"
 #include "Camera.h"
 
+
+
 using namespace std;
 
 CPlayScene::CPlayScene(int id, LPCWSTR filePath) :
@@ -33,9 +35,11 @@ CPlayScene::CPlayScene(int id, LPCWSTR filePath) :
 
 #define OBJECT_TYPE_YUMETARO			0
 #define OBJECT_TYPE_GROUND				5
-
+#define OBJECT_TYPE_CAROUSEL			6
+#define OBJECT_TYPE_SLOPE				7
 #define OBJECT_TYPE_PORTAL				50
 #define OBJECT_TYPE_HUD					51
+#define OBJECT_TYPE_BLACKMONSTER		60
 
 //#define MAX_SCENE_LINE					1024
 
@@ -175,6 +179,24 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		obj = new CGround(r, b);
 	}
 	break;
+	case OBJECT_TYPE_CAROUSEL:
+	{
+		if (tokens.size() < 7) return;
+		float r = atof(tokens[5].c_str());
+		float b = atof(tokens[6].c_str());
+		int type = atoi(tokens[7].c_str());
+		obj = new CCarousel(r, b, type);
+	}
+	break;
+	case OBJECT_TYPE_SLOPE:
+	{
+		if (tokens.size() < 7) return;
+		float r = atof(tokens[5].c_str());
+		float b = atof(tokens[6].c_str());
+		int type = atoi(tokens[7].c_str());
+		obj = new CSlopeBrick(r, b, type);
+	}
+	break;
 	case OBJECT_TYPE_PORTAL:
 	{
 		int scene_id = atoi(tokens[5].c_str());
@@ -184,6 +206,11 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 	case OBJECT_TYPE_HUD:
 	{
 		hud = new CHud();
+		break;
+	}
+	case OBJECT_TYPE_BLACKMONSTER:
+	{
+		 obj= new CBlackMonster(x);
 		break;
 	}
 	default:
@@ -569,7 +596,7 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		switch (map->GetId())
 		{
 		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_1, YUMETARO_1_1_Y_1);
+			((CPlayScene*)scence)->ChangeMarioLocation(false, true, 460, 320);
 			break;
 		case MAP_1_4:
 			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_1, YUMETARO_1_4_Y_1);
@@ -667,10 +694,10 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		switch (map->GetId())
 		{
 		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(true, true, YUMETARO_1_1_X_0, YUMETARO_1_1_Y_0);
+			((CPlayScene*)scence)->ChangeMarioLocation(false, true, 50, 200);
 			break;
 		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(true, true, YUMETARO_1_4_X_0, YUMETARO_1_4_Y_0);
+			((CPlayScene*)scence)->ChangeMarioLocation(true, true, 50, 200);
 			camera->SetIsMoving(false);
 			break;
 		default:
@@ -679,7 +706,7 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 		break;
 	case DIK_S:
 		if (yumetaro->canJump)
-			yumetaro->vy = -YUMETARO_JUMP_Y_SPEED;
+			yumetaro->vy = -6*YUMETARO_JUMP_Y_SPEED;
 		yumetaro->canRepeatJump = false;
 		//mario->canJump = false;		
 		break;
@@ -780,10 +807,11 @@ void CPlayScenceKeyHandler::KeyState(BYTE* states)
 	// Key S handle jump
 	if (game->IsKeyDown(DIK_S) && yumetaro->canJump)
 	{
-		if (yumetaro->canJumpHigher)
+		/*if (yumetaro->canJumpHigher)
 		{
 			yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
-		}		
+		}*/		
+		yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
 		yumetaro->SetState(YUMETARO_STATE_JUMP);
 	}	
 }

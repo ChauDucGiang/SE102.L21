@@ -10,12 +10,12 @@
 #define MAP_1_1					1
 #define LEFT_MAP_1_1			0
 #define TOP_MAP_1_1				0
-#define RIGHT_MAP_1_1			1008
-#define BOTTOM_MAP_1_1			478
-#define WIDTH_MAP_1_1			2816
-#define HEIGHT_MAP_1_1			432
-#define WIDTH_ALL_MAP_1_1		2816
-#define HEIGHT_ALL_MAP_1_1		656
+#define RIGHT_MAP_1_1			2048
+#define BOTTOM_MAP_1_1			768
+#define WIDTH_MAP_1_1			2048
+#define HEIGHT_MAP_1_1			768
+#define WIDTH_ALL_MAP_1_1		2048
+#define HEIGHT_ALL_MAP_1_1		768
 
 #define LEFT_OTHER_MAP_1_1		1968
 #define TOP_OTHER_MAP_1_1		464

@@ -47,7 +47,7 @@ void CCamera::Update(DWORD dt)
 		float cx, cy;
 		CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
 		yumetaro->GetPosition(cx, cy);
-		SetPosition(cx, 310);		
+		SetPosition(cx, cy);
 	}
 	break;
 	case MAP_1_4:

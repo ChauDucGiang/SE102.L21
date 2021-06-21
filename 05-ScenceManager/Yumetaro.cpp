@@ -8,6 +8,7 @@
 #include "PlayerInfo.h"
 #include "Point.h"
 #include "Enemy.h"
+#include "Carousel.h"
 
 CYumetaro::CYumetaro(float x, float y) : CGameObject()
 {
@@ -33,6 +34,8 @@ CYumetaro::CYumetaro(float x, float y) : CGameObject()
 
 void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
+	DebugOut(L"[canJUmp]: %d\n", canJump);
+	DebugOut(L"[IsOnGround]: %d\n", isOnGround);
 	// Get others instance
 	CCamera* camera = CCamera::GetInstance();
 	int leftMap = camera->GetLeftMap();
@@ -82,13 +85,40 @@ void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		x = rightMap - YUMETARO_BBOX_WIDTH;
 
 	// Intersert with objs
-	for (int i = 0; i < coObjects->size(); i++)
+	//for (int i = 0; i < coObjects->size(); i++)
+	//{
+	//	if (AABBCheck(this, coObjects->at(i)))
+	//	{
+	//		if (dynamic_cast<CSlopeBrick*>(coObjects->at(i)))
+	//			isColSlopeBrick = true;
+	//		OnIntersect(coObjects->at(i), coObjects);
+	//	}
+	//	else if (dynamic_cast<CSlopeBrick*>(coObjects->at(i)))
+	//	{
+	//		isColSlopeBrick = false;
+	//	}
+	//	/*if (dynamic_cast<CSlopeBrick*>(coObjects->at(i))) {
+	//		CSlopeBrick* brick = dynamic_cast<CSlopeBrick*>(coObjects->at(i));
+	//		brick->Collision(this, dy, dx);
+	//	}*/
+	//}
+	for (UINT i = 0; i < coObjects->size(); i++)
 	{
 		if (AABBCheck(this, coObjects->at(i)))
 		{
-			OnIntersect(coObjects->at(i), coObjects);
+			if (dynamic_cast<CSlopeBrick*>(coObjects->at(i)))
+			{
+				CSlopeBrick* brick = dynamic_cast<CSlopeBrick*>(coObjects->at(i));
+				brick->Collision(this, dy, dx);
+			}
 		}
+		
+		/*if (dynamic_cast<CPlatformsMoving*>(coObjects->at(i))) {
+			CPlatformsMoving* brick = dynamic_cast<CPlatformsMoving*>(coObjects->at(i));
+			brick->Collision(this, dy, dx, dt);
+		}*/
 	}
+
 
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
@@ -113,20 +143,23 @@ void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 		if (vy != 0)
 		{
-			isOnGround = false;
-			if (vy > 0)
-				canJump = false;
+			if (!isColSlopeBrick) {
+				isOnGround = false;
+				if (vy > 0)
+					canJump = false;
+			}
 		}
 	}
 	else
 	{
+		//MoveThrough(OBJ_MOVE_XY);
 		float min_tx, min_ty, nx = 0, ny;
 		float rdx = 0;
 		float rdy = 0;
 
 		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny, rdx, rdy);
 		colX = nx;
-
+		
 		x += min_tx * dx + nx * YUMETARO_DEFLECT_SPEED;
 		y += min_ty * dy + ny * YUMETARO_DEFLECT_SPEED;
 
@@ -139,14 +172,23 @@ void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			e->obj->colY = e->ny;
 
 			// Stand on obj
-			if (ny < 0 && e->obj != NULL)
+			if (ny < 0 && e->obj != NULL && !dynamic_cast<CSlopeBrick*>(e->obj))
 			{
-				// Disable mutiScore
-				if (canMultiScoreJump && isOnGround)
+				/*if (dynamic_cast<CCarousel*>(e->obj))
 				{
-					canMultiScoreJump = false;
-					pointFactor = 0;
-				}
+					CCarousel* carousel = dynamic_cast<CCarousel*>(e->obj);
+					if (carousel->GetState() != NULL) {
+						x += carousel->GetBrickSpeed() * dt;
+					}
+				}*/
+				/*else*/ /*if (dynamic_cast<CSlopeBrick*>(e->obj))
+				{
+					if (e->nx != 0)
+						x += dx;
+					else if (e->ny != 0)
+						y += dy;
+
+				}*/
 				// Stand-Y
 				if (state != YUMETARO_STATE_DIE)
 					PreventMoveY(e->obj);
@@ -167,6 +209,7 @@ void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 					canJumpHigher = false;
 				}
 			}
+	
 			// Head hit objs
 			else if (ny > 0 && !dynamic_cast<CBullet*>(e->obj))
 			{
@@ -179,6 +222,16 @@ void CYumetaro::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			{
 				canJump = true;
 				canJumpHigher = true;
+			}
+			else if (dynamic_cast<CSlopeBrick*>(e->obj))
+			{
+				/*vy = 0;*/
+				isColSlopeBrick = true;
+				//MoveThrough(OBJ_MOVE_XY);
+				if (e->nx != 0)
+					x += dx;
+				else if (e->ny != 0)
+					y += dy;
 			}
 
 			// Bullet
@@ -345,6 +398,47 @@ void CYumetaro::OnIntersect(CGameObject* obj, vector<LPGAMEOBJECT>* coObjs)
 			if (bullet->isEnemy)
 			{
 				Hurt();
+			}
+		}
+		// ...
+		if (dynamic_cast<CSlopeBrick*>(obj))
+		{
+			//vy = 0;
+			CSlopeBrick* slopeBrick = dynamic_cast<CSlopeBrick*>(obj);
+			if (slopeBrick->state == SLOPE_STATE_UP)
+			{
+				if (right + dx  < slopeBrick->left || right - 4 + dx > slopeBrick->right || bottom + dy < slopeBrick->top)
+					return;
+
+				float check_x = right + dx;
+				float check_y = bottom + dy;
+
+				float y_col = slopeBrick->y + (slopeBrick->right - check_x) * slopeBrick->ratio_hw;
+
+				if (check_y > y_col)
+				{
+					check_x = check_x - YUMETARO_BBOX_WIDTH;
+					check_y = y_col - YUMETARO_BBOX_HEIGHT;
+
+					SetPosition(check_x - dx, check_y - dy);
+					/*DebugOut(L"[check_x]: %f\n", check_x);
+					DebugOut(L"[check_y]: %f\n", check_y);*/
+				}
+			}
+			else if (state == SLOPE_STATE_DOWN) {
+				if (left + 4 + dx  < slopeBrick->left || left + dx > slopeBrick->right || bottom + dy < slopeBrick->top)
+					return;
+
+				float check_x = left + dx;
+				float check_y = bottom + dy;
+
+				float y_col = slopeBrick->y + (check_x - slopeBrick->left) * slopeBrick->ratio_hw;
+
+				if (check_y > y_col)
+				{
+					check_y = y_col - YUMETARO_BBOX_HEIGHT;
+					SetPosition(check_x - dx, check_y - dy);
+				}
 			}
 		}
 	}

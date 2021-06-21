@@ -10,6 +10,7 @@
 #include "Point.h"
 #include "PlayerInfo.h"
 #include "PlayScence.h"
+#include "Carousel.h"
 
 CGameObject::CGameObject()
 {
@@ -66,7 +67,7 @@ bool CGameObject::AABBCheck(CGameObject* obj1, CGameObject* obj2)
 	float left2, top2, right2, bottom2;
 
 	obj1->GetBoundingBox(left1, top1, right1, bottom1);
-	obj2->GetBoundingBox(left2, top2, right2, bottom2);	
+	obj2->GetBoundingBox(left2, top2, right2, bottom2);
 
 	// return true nếu collision xảy ra
 	return CGame::GetInstance()->AABBCheck(left1, top1, right1, bottom1, left2, top2, right2, bottom2);
@@ -99,7 +100,15 @@ void CGameObject::ExceptionalCase(CGameObject* obj2, LPCOLLISIONEVENT& coEvent)
 }
 
 void CGameObject::ExceptionalPotentialCase(CGameObject* obj2, LPCOLLISIONEVENT& coEvent)
-{	
+{
+	// Case col with multi Bricks
+	if (dynamic_cast<CCarousel*>(obj2) || dynamic_cast<CGround*>(obj2))
+	{
+		if (coEvent->nx != 0 && (right < obj2->left || left > obj2->right) && bottom == obj2->top)
+			coEvent->nx = 0.0f;
+		if (coEvent->ny != 0 && (right <= obj2->left || left >= obj2->right))
+			coEvent->ny = 0.0f;
+	}
 }
 
 /*
@@ -164,6 +173,7 @@ void CGameObject::FilterCollision(
 
 void CGameObject::PreventMoveX(float nx, LPGAMEOBJECT obj2)
 {
+	//vx = 0;
 	if (nx < 0)						//obj1 va chạm phía bên TRÁI obj2, cạnh trái obj2 - cạnh phải obj1 <= 0 
 		x += obj2->left - right;
 	else if (nx > 0)				//obj1 va chạm phía bên PHẢI obj2, cạnh phải obj2 - cạnh trái obj1 >= 0 
@@ -363,7 +373,7 @@ void CGameObject::Alive()
 
 void CGameObject::RenderBoundingBox()
 {
-	/*D3DXVECTOR3 p(x, y, 0);
+	D3DXVECTOR3 p(x, y, 0);
 	RECT rect;
 
 	LPDIRECT3DTEXTURE9 bbox = CTextures::GetInstance()->Get(ID_TEX_BBOX);
@@ -376,7 +386,7 @@ void CGameObject::RenderBoundingBox()
 	rect.right = (int)r - (int)l;
 	rect.bottom = (int)b - (int)t;
 
-	CGame::GetInstance()->Draw(l, t, bbox, rect.left, rect.top, rect.right, rect.bottom, 0, 0, xReverse, yReverse, 128);*/
+	CGame::GetInstance()->Draw(l, t, bbox, rect.left, rect.top, rect.right, rect.bottom, 0, 0, xReverse, yReverse, 128);
 }
 
 

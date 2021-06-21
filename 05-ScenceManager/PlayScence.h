@@ -7,6 +7,9 @@
 #include "Hud.h"
 #include "Grid.h"
 #include "Yumetaro.h"
+#include "BlackMonster.h"
+#include "Carousel.h"
+#include "SlopeBrick.h"
 
 class CPlayScene: public CScene
 {

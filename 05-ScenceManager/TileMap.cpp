@@ -23,8 +23,8 @@ CTileMap::CTileMap(int idTex, string txtMapPath)
 	LPDIRECT3DTEXTURE9 texture = CTextures::GetInstance()->Get(idTex);
 	D3DSURFACE_DESC desc;
 	texture->GetLevelDesc(0, &desc);
-	int numColumns = desc.Width / TILE_SIZE;	// 32
-	//int numRows = desc.Height / TILE_SIZE;	// 76	
+	int numColumns = desc.Width / TILE_SIZE;	// 16
+	
 
 	LPSPRITE sprite;
 	int tileIndex;
