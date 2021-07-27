@@ -8,9 +8,6 @@
 #include "Portal.h"
 #include "TileMap.h"
 #include "Camera.h"
-
-
-
 using namespace std;
 
 CPlayScene::CPlayScene(int id, LPCWSTR filePath) :
@@ -37,9 +34,22 @@ CPlayScene::CPlayScene(int id, LPCWSTR filePath) :
 #define OBJECT_TYPE_GROUND				5
 #define OBJECT_TYPE_CAROUSEL			6
 #define OBJECT_TYPE_SLOPE				7
+#define OBJECT_TYPE_PLATFORMSMOVING		8
+#define OBJECT_TYPE_TREASURE_TREE		9
+#define OBJECT_TYPE_WATER				10
+#define OBJECT_TYPE_WORM				11
+#define OBJECT_TYPE_BALLGUN				12
+#define OBJECT_TYPE_TIMEBOMB			13
+#define OBJECT_TYPE_ELEVATOR			14
+#define OBJECT_TYPE_WINDOW				15
+#define OBJECT_TYPE_TREASUE				16
+#define OBJECT_TYPE_BOSS				17
+#define OBJECT_TYPE_TUBE				18
+#define OBJECT_TYPE_ZONE				19
 #define OBJECT_TYPE_PORTAL				50
 #define OBJECT_TYPE_HUD					51
 #define OBJECT_TYPE_BLACKMONSTER		60
+#define OBJECT_TYPE_BLACK_PIPE			61
 
 //#define MAX_SCENE_LINE					1024
 
@@ -162,6 +172,7 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 	switch (object_type)
 	{
 	case OBJECT_TYPE_YUMETARO:
+
 		if (player != NULL)
 		{
 			DebugOut(L"[ERROR] MARIO object was created before!\n");
@@ -169,14 +180,52 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		}
 		obj = new CYumetaro(x, y);
 		player = (CYumetaro*)obj;
-
-		DebugOut(L"[INFO] Player object created!\n");
-		break;	
+		break;
 	case OBJECT_TYPE_GROUND:
 	{
 		float r = atof(tokens[5].c_str());
 		float b = atof(tokens[6].c_str());
 		obj = new CGround(r, b);
+
+	}
+
+	DebugOut(L"[INFO] Player object created!\n");
+	break;
+	case OBJECT_TYPE_TREASURE_TREE:
+	{
+
+		obj = new CTreasureTree();
+	}
+	break;
+	case OBJECT_TYPE_WORM:
+	{
+		obj = new CWorm(x);
+	}
+	break;
+	case OBJECT_TYPE_BLACK_PIPE:
+	{
+		float r = atof(tokens[5].c_str());
+		float b = atof(tokens[6].c_str());
+		int type = atoi(tokens[7].c_str());
+		int destinationDown = atoi(tokens[8].c_str());
+		int destinationUp = atoi(tokens[9].c_str());
+		float tele_y = atoi(tokens[10].c_str());
+		obj = new CBlackPipe(x, y, r, b, type, destinationDown, destinationUp, tele_y);
+	}
+	break;
+	case OBJECT_TYPE_PLATFORMSMOVING:
+	{
+		if (tokens.size() < 9) return;
+		float r = atof(tokens[5].c_str());
+		float b = atof(tokens[6].c_str());
+		int type = atoi(tokens[9].c_str());
+		obj = new CPlatformsMoving(r, b, type);
+		CPlatformsMoving* pm = (CPlatformsMoving*)obj;
+		int start = atoi(tokens[7].c_str());
+		int end = atoi(tokens[8].c_str());
+		pm->SetStart(start);
+		pm->SetEnd(end);
+
 	}
 	break;
 	case OBJECT_TYPE_CAROUSEL:
@@ -195,6 +244,36 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		float b = atof(tokens[6].c_str());
 		int type = atoi(tokens[7].c_str());
 		obj = new CSlopeBrick(r, b, type);
+
+		float ratio_hw = (y - b) / (r - x);
+		CSlopeBrick* slope = (CSlopeBrick*)obj;
+		slope->SetRatio(ratio_hw);
+	}
+	break;
+	case OBJECT_TYPE_WATER:
+	{
+		obj = new CWater();
+	}
+	break;
+	case OBJECT_TYPE_WINDOW:
+	{
+		obj = new CWindow();
+	}
+	break;
+	case OBJECT_TYPE_ZONE:
+	{
+		obj = new CZone();
+	}
+	break;
+	case OBJECT_TYPE_ELEVATOR:
+	{
+		obj = new CElevator();
+	}
+	break;
+	case OBJECT_TYPE_TREASUE:
+	{
+		int type = atoi(tokens[5].c_str());
+		obj = new CTreasure(type);
 	}
 	break;
 	case OBJECT_TYPE_PORTAL:
@@ -202,17 +281,41 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		int scene_id = atoi(tokens[5].c_str());
 		obj = new CPortal(x, y, scene_id);
 	}
-	break;	
+	break;
 	case OBJECT_TYPE_HUD:
 	{
 		hud = new CHud();
-		break;
+	
 	}
+	break;
 	case OBJECT_TYPE_BLACKMONSTER:
 	{
-		 obj= new CBlackMonster(x);
-		break;
+		obj = new CBlackMonster(x);	
 	}
+	break;
+	case OBJECT_TYPE_BOSS:
+	{
+		obj = new CBoss(x);
+	}
+	break;
+	case OBJECT_TYPE_BALLGUN:
+	{
+		obj = new CBallGun();
+
+	}
+	break;
+	case OBJECT_TYPE_TIMEBOMB:
+	{
+		obj = new CTimeBomb();
+
+	}
+	break;
+	case OBJECT_TYPE_TUBE:
+	{
+		float type = atof(tokens[5].c_str());
+		obj = new CTube(type);
+	}
+	break;	
 	default:
 		DebugOut(L"[ERR] Invalid object type: %d\n", object_type);
 		return;
@@ -238,7 +341,9 @@ void CPlayScene::_ParseSection_OBJECTS(string line)
 		float cx, cy;
 		player->GetPosition(cx, cy);
 		CCamera::GetInstance()->SetPosition(cx, cy);
+		//hud->SetPosition(cx, cy - CGame::GetInstance()->GetScreenHeight());
 	}
+
 }
 
 void CPlayScene::_ParseSection_MAP(string line)
@@ -252,7 +357,7 @@ void CPlayScene::_ParseSection_MAP(string line)
 	float mapHeight = atoi(tokens[3].c_str());
 	map = new CTileMap(idTexMap, tokens[0]);
 
-	CCamera::GetInstance()->SetMapSize(0, 0, RIGHT_MAP_1_1, BOTTOM_MAP_1_1, WIDTH_MAP_1_1, HEIGHT_MAP_1_1);
+	CCamera::GetInstance()->SetMapSize(0, TOP_MAP_1_1, RIGHT_MAP_1_1, BOTTOM_MAP_1_1, WIDTH_MAP_1_1, HEIGHT_MAP_1_1);
 }
 
 void CPlayScene::_ParseSection_GRID(string line)
@@ -288,7 +393,7 @@ void CPlayScene::_ParseSection_GRID(string line)
 				{
 					// Add obj into cell of grid
 					grid->AddObjToCell(cellIndex, objects[t]);
-					objects[t]->listCellIndex.push_back(cellIndex);					
+					objects[t]->listCellIndex.push_back(cellIndex);
 					break;
 				}
 			}
@@ -356,80 +461,51 @@ void CPlayScene::Load()
 	CTextures::GetInstance()->Add(ID_TEX_BBOX, L"textures\\bbox.png", D3DCOLOR_XRGB(255, 255, 255));
 
 	DebugOut(L"[INFO] Done loading scene resources %s\n", sceneFilePath);
+
+
+	// Create quadtree
+	quadtree = new Quadtree(1, 0.0f, 768.0f, 2048.0f, 0.0f);
+
 }
 
 void CPlayScene::Update(DWORD dt)
 {
-	// We know that Mario is the first object in the list hence we won't add him into the colliable object list
-	// TO-DO: This is a "dirty" way, need a more organized way 
-
-	// calculate obj in view
-	viewOtherObjs.clear();
-	viewObjs.clear();
-	viewAfterObjs.clear();
-
-	grid->CalcColliableObjs(CCamera::GetInstance(), viewObjs, viewAfterObjs);
-	/*DebugOut(L"[Obj]: %d\n", viewObjs.size());
-	DebugOut(L"[AfterObj]: %d\n", viewAfterObjs.size());
-	DebugOut(L"[BehindObj]: %d\n", behindObjs.size());
-	DebugOut(L"[FrontObj]: %d\n", frontObjs.size());*/
-
-	// Cal colliable objs
+	//DebugOut(L"[Yumetaro objects_size]: %d\n", objects.size());
+	
+	for (size_t i = 0; i < objects.size(); i++) {
+		if (/*objects[i]->isActive && !objects[i]->isDie && */!objects[i]->isDead) {
+			if (dynamic_cast<CYumetaro*>(objects[i]))
+				continue;
+			quadtree->Insert(objects[i]);
+		}
+		
+	}
+	
+	for (size_t i = 0; i < objects.size(); i++)
+	{
+		if (!objects[i]->isDead && CCamera::GetInstance()->InCamera(objects[i])) {
+			if (dynamic_cast<CYumetaro*>(objects[i]))
+				continue;
+			if (dynamic_cast<CGround*>(objects[i]))
+				continue;
+			if (dynamic_cast<CSlopeBrick*>(objects[i]))
+				continue;
+			vector<LPGAMEOBJECT> coObjectsUpdate;
+			quadtree->Retrieve(&coObjectsUpdate, objects[i]);
+			objects[i]->Update(dt, &coObjectsUpdate);
+		}	
+	}
 	vector<LPGAMEOBJECT> coObjects;
-	for (size_t i = 0; i < behindObjs.size(); i++)
-	{
-		if (behindObjs[i]->isActive && !behindObjs[i]->isDie && !behindObjs[i]->isDead)
-			coObjects.push_back(behindObjs[i]);
-	}
-	for (size_t i = 0; i < viewObjs.size(); i++)
-	{
-		/*if (i == 2) continue;*/
-		if (dynamic_cast<CYumetaro*>(viewObjs.at(i)))
-			continue;
-		if (viewObjs[i]->isActive && viewObjs[i]->isInGrid && !viewObjs[i]->isDie && !viewObjs[i]->isDead)
-			coObjects.push_back(viewObjs[i]);
-	}
-	for (size_t i = 0; i < viewAfterObjs.size(); i++)
-	{
-		if (viewAfterObjs[i]->isActive && !viewAfterObjs[i]->isDie && !viewAfterObjs[i]->isDead)
-			coObjects.push_back(viewAfterObjs[i]);
-	}
-	for (size_t i = 0; i < frontObjs.size(); i++)
-	{
-		if (frontObjs[i]->isActive && !frontObjs[i]->isDie && !frontObjs[i]->isDead)
-			coObjects.push_back(frontObjs[i]);
-	}
+	// Update player
+	quadtree->Retrieve(&coObjects, player);
+	//DebugOut(L"[Yumetaro CoObjects]: %d\n", coObjects.size());
+	player->Update(dt, &coObjects);
 
-	// Update all objs: otherObjs -> objs -> Mario -> afterObjs
-	for (size_t i = 0; i < behindObjs.size(); i++)
-	{
-		if (!behindObjs[i]->isDead)
-			behindObjs[i]->Update(dt, &coObjects);
-	}
-	for (size_t i = 0; i < viewObjs.size(); i++)
-	{
-		if (!viewObjs[i]->isDead && viewObjs[i]->isInGrid)
-			viewObjs[i]->Update(dt, &coObjects);
-	}
-	if (player != NULL)
-	{
-		player->Update(dt, &coObjects);
-	}
-	for (size_t i = 0; i < viewAfterObjs.size(); i++)
-	{
-		if (!viewAfterObjs[i]->isDead)
-			viewAfterObjs[i]->Update(dt, &coObjects);
-	}
-	for (size_t i = 0; i < frontObjs.size(); i++)
-	{
-		if (!frontObjs[i]->isDead)
-			frontObjs[i]->Update(dt, &coObjects);
-	}
-	// skip the rest if scene was already unloaded (Mario::Update might trigger PlayScene::Unload)
+	// Làm trống quadtree
+	quadtree->Clear();
 	if (player == NULL) return;
 
 	hud->Update(dt);
-
 	CCamera::GetInstance()->Update(dt);
 }
 
@@ -439,43 +515,23 @@ void CPlayScene::Render()
 	{
 		map->Render();
 	}
-
-	viewOtherObjs.clear();
-	viewObjs.clear();
-	viewAfterObjs.clear();
-
-	grid->CalcColliableObjs(CCamera::GetInstance(), viewObjs, viewAfterObjs);
-
-	// Render all objs: otherObjs -> objs -> Mario -> afterObjs
-	for (int i = 0; i < behindObjs.size(); i++)
+	// Render objects
+	for (int i = 0; i < objects.size(); i++)
 	{
-		if (behindObjs[i]->isActive && !behindObjs[i]->isDead)
-			behindObjs[i]->Render();
-	}
-	for (int i = 0; i < viewObjs.size(); i++)
-	{
-		if (viewObjs[i]->isActive && viewObjs[i]->isInGrid && !viewObjs[i]->isDead)
-		{
-			if (dynamic_cast<CYumetaro*>(viewObjs[i]))
+		if (objects[i]->isActive && !objects[i]->isDead  && CCamera::GetInstance()->InCamera(objects[i])) {
+			if (dynamic_cast<CYumetaro*>(objects[i]))
 				continue;
-			viewObjs[i]->Render();
+			else objects[i]->Render();
+		}	
+	}
+	if (player) player->Render();
+	for (int i = 0; i < objects.size(); i++)
+	{
+		if (objects[i]->isActive  && !objects[i]->isDead) {
+			if (dynamic_cast<CTube*>(objects[i]) || dynamic_cast<CWindow*>(objects[i]) || dynamic_cast<CBlackPipe*>(objects[i]))
+				objects[i]->Render();
 		}
 	}
-	if (player != NULL)
-		player->Render();
-	for (int i = 0; i < viewAfterObjs.size(); i++)
-	{
-		if (viewAfterObjs[i]->isActive && !viewAfterObjs[i]->isDead)
-			viewAfterObjs[i]->Render();
-	}
-	for (int i = 0; i < frontObjs.size(); i++)
-	{
-		if (frontObjs[i]->isActive && !frontObjs[i]->isDead)
-			frontObjs[i]->Render();
-	}
-
-	// skip the rest if scene was already unloaded (Mario::Update might trigger PlayScene::Unload)
-	if (player == NULL) return;
 
 	hud->Render();
 }
@@ -507,7 +563,10 @@ void CPlayScene::Unload()
 
 	delete player;
 	player = NULL;
-
+	if (quadtree) {
+		delete quadtree;
+		quadtree = NULL;
+	}
 	delete grid;
 	delete map;
 	delete hud;
@@ -522,26 +581,62 @@ void CPlayScene::EndScene()
 {
 	hud->EndScene();
 }
-
-void CPlayScene::ChangeMarioLocation(bool isOnOtherMap, bool isCameraStatic, float x, float y)
+void CPlayScene::PushBackObj(CGameObject* obj) {
+	objects.push_back(obj);
+}
+void CPlayScene::ChangeYumetaroLocation(int childSceneId, bool isCameraStatic, float x, float y)
 {
-	player->isOnOtherMap = isOnOtherMap;
 	player->SetPosition(x, y);
 
 	CCamera::GetInstance()->SetIsStatic(isCameraStatic);
-	switch (map->GetId())
+	/*switch (map->GetId())
 	{
+	case MAP_1:
+		CCamera::GetInstance()->SetMapSize(LEFT_OTHER_MAP_1_1, TOP_OTHER_MAP_1_1, RIGHT_OTHER_MAP_1_1, BOTTOM_OTHER_MAP_1_1, WIDTH_OTHER_MAP_1_1, HEIGHT_OTHER_MAP_1_1);
+		break;
+	case MAP_2:
+		CCamera::GetInstance()->SetMapSize(LEFT_OTHER_MAP_1_4, TOP_OTHER_MAP_1_4, RIGHT_OTHER_MAP_1_4, BOTTOM_OTHER_MAP_1_4, WIDTH_OTHER_MAP_1_4, HEIGHT_OTHER_MAP_1_4);
+		break;
+	default:
+		break;
+	}*/
+	ChangeChildScene(childSceneId);
+}
+
+void CPlayScene::ChangeChildScene(int childSceneId)
+{
+	this->childSceneId = childSceneId;
+	switch (childSceneId)
+	{
+	case MAP_1_0:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_0, TOP_MAP_1_0, RIGHT_MAP_1_0, BOTTOM_MAP_1_0, WIDTH_MAP_1_0, HEIGHT_MAP_1_0);
+		break;
 	case MAP_1_1:
-		if (!isOnOtherMap)
-			CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_1, TOP_MAP_1_1, RIGHT_MAP_1_1, BOTTOM_MAP_1_1, WIDTH_MAP_1_1, HEIGHT_MAP_1_1);
-		else
-			CCamera::GetInstance()->SetMapSize(LEFT_OTHER_MAP_1_1, TOP_OTHER_MAP_1_1, RIGHT_OTHER_MAP_1_1, BOTTOM_OTHER_MAP_1_1, WIDTH_OTHER_MAP_1_1, HEIGHT_OTHER_MAP_1_1);
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_1, TOP_MAP_1_1, RIGHT_MAP_1_1, BOTTOM_MAP_1_1, WIDTH_MAP_1_1, HEIGHT_MAP_1_1);
+		break;
+	case MAP_1_2:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_2, TOP_MAP_1_2, RIGHT_MAP_1_2, BOTTOM_MAP_1_2, WIDTH_MAP_1_2, HEIGHT_MAP_1_2);
+		break;
+	case MAP_1_3:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_3, TOP_MAP_1_3, RIGHT_MAP_1_3, BOTTOM_MAP_1_3, WIDTH_MAP_1_3, HEIGHT_MAP_1_3);
 		break;
 	case MAP_1_4:
-		if (!isOnOtherMap)
-			CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_4, TOP_MAP_1_4, RIGHT_MAP_1_4, BOTTOM_MAP_1_4, WIDTH_MAP_1_4, HEIGHT_MAP_1_4);
-		else
-			CCamera::GetInstance()->SetMapSize(LEFT_OTHER_MAP_1_4, TOP_OTHER_MAP_1_4, RIGHT_OTHER_MAP_1_4, BOTTOM_OTHER_MAP_1_4, WIDTH_OTHER_MAP_1_4, HEIGHT_OTHER_MAP_1_4);
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_4, TOP_MAP_1_4, RIGHT_MAP_1_4, BOTTOM_MAP_1_4, WIDTH_MAP_1_4, HEIGHT_MAP_1_4);
+		break;
+	case MAP_1_5:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_5, TOP_MAP_1_5, RIGHT_MAP_1_5, BOTTOM_MAP_1_5, WIDTH_MAP_1_5, HEIGHT_MAP_1_5);
+		break;
+	case MAP_1_6:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_6, TOP_MAP_1_6, RIGHT_MAP_1_6, BOTTOM_MAP_1_6, WIDTH_MAP_1_6, HEIGHT_MAP_1_6);
+		break;
+	case MAP_1_7:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_7, TOP_MAP_1_7, RIGHT_MAP_1_7, BOTTOM_MAP_1_7, WIDTH_MAP_1_7, HEIGHT_MAP_1_7);
+		break;
+	case MAP_1_8:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_8, TOP_MAP_1_8, RIGHT_MAP_1_8, BOTTOM_MAP_1_8, WIDTH_MAP_1_8, HEIGHT_MAP_1_8);
+		break;
+	case MAP_1_9:
+		CCamera::GetInstance()->SetMapSize(LEFT_MAP_1_9, TOP_MAP_1_9, RIGHT_MAP_1_9, BOTTOM_MAP_1_9, WIDTH_MAP_1_9, HEIGHT_MAP_1_9);
 		break;
 	default:
 		break;
@@ -561,32 +656,34 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_B:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			CGame::GetInstance()->SwitchScene(MAP_1_4);
+		case MAP_1:
+			CGame::GetInstance()->SwitchScene(MAP_2);
 			camera->SetIsMoving(true);
 			break;
-		case MAP_1_4:
-			CGame::GetInstance()->SwitchScene(MAP_1_1);
+		case MAP_2:
+			CGame::GetInstance()->SwitchScene(MAP_1);
 			break;
 		default:
 			break;
 		}
 		break;
-	/*case DIK_C:
-		CGame::GetInstance()->SwitchScene(WORLD_MAP_1);
-		break;*/
+		/*case DIK_C:
+			CGame::GetInstance()->SwitchScene(WORLD_MAP_1);
+			break;*/
 	case DIK_V:
 		CGame::GetInstance()->SwitchScene(TITLE_SCREEN);
 		CCamera::GetInstance()->SetPosition(CGame::GetInstance()->GetScreenWidth() / 2, CGame::GetInstance()->GetScreenHeight() / 2);
 		CCamera::GetInstance()->SetMapSize(LEFT_TITLE_SCENE, TOP_TITLE_SCENE, RIGHT_TITLE_SCENE, BOTTOM_TITLE_SCENE, WIDTH_TITLE_SCENE, HEIGHT_TITLE_SCENE);
 		break;
-	case DIK_NUMPAD9:
+	case DIK_NUMPAD0:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, false, YUMETARO_1_1_X_9, YUMETARO_1_1_Y_9);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_0, true, 138, 658);
 			break;
-		case MAP_1_4:
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, 50, 200);
+			camera->SetIsMoving(false);*/
 			break;
 		default:
 			break;
@@ -595,12 +692,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD1:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, 460, 320);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_1, true, 895, 500);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_1, YUMETARO_1_4_Y_1);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_1, YUMETARO_1_4_Y_1);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -609,12 +706,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD2:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_2, YUMETARO_1_1_Y_2);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_2, true, 569, 294);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_2, YUMETARO_1_4_Y_2);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_2, YUMETARO_1_4_Y_2);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -623,12 +720,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD3:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_3, YUMETARO_1_1_Y_3);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_3, true, 538, 100);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_3, YUMETARO_1_4_Y_3);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_3, YUMETARO_1_4_Y_3);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -637,12 +734,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD4:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_4, YUMETARO_1_1_Y_4);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_3, true, 1160, 58);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_4, YUMETARO_1_4_Y_4);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_4, YUMETARO_1_4_Y_4);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -651,12 +748,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD5:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_5, YUMETARO_1_1_Y_5);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_5, true, 1977, 52);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_5, YUMETARO_1_4_Y_5);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_4, YUMETARO_1_4_Y_4);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -665,12 +762,12 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD6:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, false, YUMETARO_1_1_X_6, YUMETARO_1_1_Y_6);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_6, true, 1812, 342);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_6, YUMETARO_1_4_Y_6);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_5, YUMETARO_1_4_Y_5);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
@@ -679,48 +776,71 @@ void CPlayScenceKeyHandler::OnKeyDown(int KeyCode)
 	case DIK_NUMPAD7:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_1_X_7, YUMETARO_1_1_Y_7);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_7, true, 2004, 526);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, YUMETARO_1_4_X_7, YUMETARO_1_4_Y_7);
-			camera->SetIsMoving(true);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_6, YUMETARO_1_4_Y_6);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
 		}
 		break;
-	case DIK_NUMPAD0:
+	case DIK_NUMPAD8:
 		switch (map->GetId())
 		{
-		case MAP_1_1:
-			((CPlayScene*)scence)->ChangeMarioLocation(false, true, 50, 200);
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_8, true, 1950, 636);
 			break;
-		case MAP_1_4:
-			((CPlayScene*)scence)->ChangeMarioLocation(true, true, 50, 200);
-			camera->SetIsMoving(false);
+		case MAP_2:
+			/*((CPlayScene*)scence)->ChangeMarioLocation(true, YUMETARO_1_4_X_7, YUMETARO_1_4_Y_7);
+			camera->SetIsMoving(true);*/
 			break;
 		default:
 			break;
 		}
+		break;
+	case DIK_NUMPAD9:
+		switch (map->GetId())
+		{
+		case MAP_1:
+			((CPlayScene*)scence)->ChangeYumetaroLocation(MAP_1_9, true, 1226, 634);
+			break;
+		case MAP_2:
+			break;
+		default:
+			break;
+		}
+		break;
+	case DIK_Z:
+		yumetaro->canAttack = true;
 		break;
 	case DIK_S:
 		if (yumetaro->canJump)
-			yumetaro->vy = -6*YUMETARO_JUMP_Y_SPEED;
+			yumetaro->vy = YUMETARO_JUMP_Y_SPEED;
 		yumetaro->canRepeatJump = false;
 		//mario->canJump = false;		
 		break;
 	case DIK_A:
-		yumetaro->canHold = true;
 		
-		if (yumetaro->canAttack)
-		{
+		yumetaro->canHold = true;	
+		if (yumetaro->canAttack) {
+			DebugOut(L"Yumetaro Attack n %d\n");
+			CStar* bullet = new CStar();
+			((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->PushBackObj(bullet);
+			bullet->SetPosition(yumetaro->x, yumetaro->top + 16);
+			bullet->firstY = yumetaro->top + 16;
+			bullet->vx = yumetaro->nx * STAR_ENEMY_X_SPEED * 5;
+			bullet->vy = STAR_Y_SPEED / 7;
+			bullet->SetState(STAR_STATE_FIRE);
+			yumetaro->canAttack = false;
 			
 		}
-		break;	
+		break;
 	case DIK_R:
 		yumetaro->Reset();
-		break;	
+		break;
 	}
 }
 
@@ -734,15 +854,18 @@ void CPlayScenceKeyHandler::OnKeyUp(int KeyCode)
 	switch (KeyCode)
 	{
 	case DIK_DOWN:
-		if (!yumetaro->canAttack)
-			yumetaro->canAttack = true;
+		/*if (!yumetaro->canAttack)
+			yumetaro->canAttack = true;*/
 		break;
 	case DIK_X:
 		break;
+	/*case DIK_A:
+		yumetaro->canAttack = false;
+		break;*/
 	case DIK_S:
 		yumetaro->canJump = false;
 		yumetaro->canRepeatJump = true;
-		break;	
+		break;
 	}
 }
 
@@ -756,7 +879,7 @@ void CPlayScenceKeyHandler::KeyState(BYTE* states)
 	if (state == YUMETARO_STATE_DIE) {
 		return;
 	}
-	if (game->IsKeyDown(DIK_RIGHT)) {
+	if (game->IsKeyDown(DIK_RIGHT) && state != YUMETARO_STATE_PIPE) {
 		yumetaro->nx = 1;
 		// Increase speed
 		if (yumetaro->vx < YUMETARO_WALKING_SPEED)
@@ -771,47 +894,54 @@ void CPlayScenceKeyHandler::KeyState(BYTE* states)
 			yumetaro->SetState(YUMETARO_STATE_WALK);
 	}
 	// Key Left
-	else if (game->IsKeyDown(DIK_LEFT))
+	else if (game->IsKeyDown(DIK_LEFT) && state != YUMETARO_STATE_PIPE)
 	{
 		yumetaro->nx = -1;
 		// Increase speed
 		if (yumetaro->vx > -YUMETARO_WALKING_SPEED)
 			yumetaro->vx -= YUMETARO_INCREASE_X_SPEED;
-		
+
 		// Skid
 		if (yumetaro->vx > 0 && yumetaro->vx > YUMETARO_CAN_SKID_X_SPEED && yumetaro->isOnGround && !yumetaro->isHold)
-		{			
+		{
 		}
 		else if (yumetaro->vx <= 0 && yumetaro->isOnGround)
 			yumetaro->SetState(YUMETARO_STATE_WALK);
-	}	
+	}
 	// When release key Right/Left
-	else if (yumetaro->isOnGround && yumetaro->kick_start == 0 && yumetaro->tail_start == 0)
-	{		
-		if (yumetaro->nx > 0)
+	else if (yumetaro->isOnGround && !yumetaro->isColSlopeBrick && !yumetaro->isExplode && yumetaro->kick_start == 0 && yumetaro->tail_start == 0)
+	{
+		if (yumetaro->vx >= 0)
 		{
 			yumetaro->SetState(YUMETARO_STATE_WALK);
 			yumetaro->vx -= YUMETARO_DECREASE_X_SPEED;
 			if (yumetaro->vx <= 0)
+			{
 				yumetaro->SetState(YUMETARO_STATE_IDLE);
+				//DebugOut(L"[release]: right %d\n");
+			}
+
 		}
-		if (yumetaro->nx < 0)
+		if (yumetaro->vx < 0)
 		{
 			yumetaro->SetState(YUMETARO_STATE_WALK);
 			yumetaro->vx += YUMETARO_DECREASE_X_SPEED;
 			if (yumetaro->vx >= 0)
+			{
 				yumetaro->SetState(YUMETARO_STATE_IDLE);
-		}		
+				DebugOut(L"[release]: left %d\n");
+			}
+		}
 	}
 
 	// Key S handle jump
-	if (game->IsKeyDown(DIK_S) && yumetaro->canJump)
+	if (game->IsKeyDown(DIK_S) && yumetaro->canJump && yumetaro->state != YUMETARO_STATE_PIPE )
 	{
-		/*if (yumetaro->canJumpHigher)
+		if (yumetaro->canJumpHigher)
 		{
-			yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
-		}*/		
-		yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
+			yumetaro->vy += YUMETARO_JUMP_HIGH_SPEED_Y;
+		}
+		//yumetaro->vy -= YUMETARO_JUMP_HIGH_SPEED_Y;
 		yumetaro->SetState(YUMETARO_STATE_JUMP);
-	}	
+	}
 }

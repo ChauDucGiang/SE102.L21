@@ -8,7 +8,7 @@ CPoint::CPoint(float x, float y, int type)
 
 	this->type = type;
 	SetPosition(x, y);
-	appear_start = GetTickCount();
+	appear_start = GetTickCount64();
 	vy = -POINT_Y_SPEED;
 }
 
@@ -17,7 +17,7 @@ void CPoint::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	CGameObject::Update(dt);
 	y += dy;
 	
-	if (appear_start != 0 && GetTickCount() - appear_start > POINT_LAST_TIME)
+	if (appear_start != 0 && GetTickCount64() - appear_start > POINT_LAST_TIME)
 	{
 		Dead();
 		DeleteFrontObjs(coObjects);

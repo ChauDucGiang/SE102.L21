@@ -41,5 +41,6 @@ public:
 	void SetIsMoving(bool isMoving);
 
 	~CCamera();
+	bool InCamera(CGameObject* object);
 };
 

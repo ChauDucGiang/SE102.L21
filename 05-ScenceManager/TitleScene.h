@@ -44,7 +44,7 @@ protected:
 	/*CMario* mario;
 	CMario lugi;
 	CGoomba* goomba;
-	CKoopas* koopas;
+	
 	vector<CKoopas*> listKoopas;
 	vector<LPGAMEOBJECT> fallingObjs;
 	vector <LPGAMEOBJECT> objs;
@@ -52,10 +52,10 @@ protected:
 	CTitleBackGround* backGround;
 	vector<LPSPRITE> bushSprs;*/
 
-	CMario* mario = NULL;
-	CMario* lugi = NULL;
+	/*CMario* mario = NULL;
+	CMario* lugi = NULL;*/
 	CTitleBackGround* backGround = NULL;
-	CKoopas* koopas = NULL;
+	//CWorm* worm = NULL;
 	vector<LPGAMEOBJECT> fallingObjs;
 	vector<LPGAMEOBJECT> listKoopas;
 	vector<LPSPRITE> bushSprs;
@@ -84,8 +84,8 @@ public:
 	virtual void Unload();
 	
 	CTitleBackGround* GetBackGround() { return backGround; }
-	CMario* GetMario() { return mario; }
-	CMario* GetLugi() { return lugi; }
+	/*CMario* GetMario() { return mario; }
+	CMario* GetLugi() { return lugi; }*/
 	void HandleMario();
 	void HandleLugi();
 };

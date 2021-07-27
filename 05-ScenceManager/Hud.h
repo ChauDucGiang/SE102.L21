@@ -18,7 +18,7 @@
 #define SPRITE_CARD_MUSHROOM_ID				55010
 #define SPRITE_CARD_FLOWER_ID				55011
 #define SPRITE_CARD_STAR_ID					55012
-#define SPRITE_BBOX_BLACK_ID				90001	
+#define SPRITE_BBOX_BLACK_ID				1234	
 // Animation
 #define ANIMATION_FILLED_POWER_ARROW_ID		55001
 #define ANIMATION_MUSHROOM_CARD_ID			55002
@@ -34,7 +34,7 @@
 #define MAX_POWER_STACK						7
 #define MAX_CARDS							3
 #define HUD_X								35
-#define HUD_Y								200
+#define HUD_Y								160
 #define CARDHUD_DISTANCE_X					160
 #define CARD_DISTANCE_X						161
 #define HUD_DISTANCE_X						52
@@ -60,7 +60,7 @@ class CHud : public CGameObject
 	int time = 0;
 	int timeRemain = 0;
 	int power = 0;
-	CYumetaro *yumetaro = NULL;
+	CYumetaro* yumetaro = NULL;
 
 	LPSPRITE hud;
 	LPSPRITE cardsHud;
@@ -85,4 +85,3 @@ public:
 	void Render();
 	void EndScene();
 };
-

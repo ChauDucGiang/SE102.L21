@@ -84,10 +84,10 @@ void CGameObject::ExceptionalCase(CGameObject* obj2, LPCOLLISIONEVENT& coEvent)
 	if (right > obj2->left && left < obj2->right)
 	{
 		//Should check again with condition >= top && <= top + i
-		if ((int)bottom >= (int)obj2->top && (int)bottom <= (int)obj2->top + DEFLECT_Y && vy > 0)
+		if ((int)bottom <= (int)obj2->top && (int)bottom >= (int)obj2->top - DEFLECT_Y && vy < 0)
 		{
 			coEvent->t = 0.0f;
-			coEvent->ny = -1.0f;
+			coEvent->ny = 1.0f;
 			coEvent->nx = 0.0f;
 			return;
 		}
@@ -102,7 +102,7 @@ void CGameObject::ExceptionalCase(CGameObject* obj2, LPCOLLISIONEVENT& coEvent)
 void CGameObject::ExceptionalPotentialCase(CGameObject* obj2, LPCOLLISIONEVENT& coEvent)
 {
 	// Case col with multi Bricks
-	if (dynamic_cast<CCarousel*>(obj2) || dynamic_cast<CGround*>(obj2))
+	if (dynamic_cast<CCarousel*>(obj2) || dynamic_cast<CGround*>(obj2) || dynamic_cast<CBlackPipe*>(obj2))
 	{
 		if (coEvent->nx != 0 && (right < obj2->left || left > obj2->right) && bottom == obj2->top)
 			coEvent->nx = 0.0f;
@@ -123,6 +123,7 @@ void CGameObject::CalcPotentialCollisions(
 {
 	for (UINT i = 0; i < coObjects->size(); i++)
 	{
+
 		LPCOLLISIONEVENT e = SweptAABBEx(coObjects->at(i));
 		ExceptionalCase(coObjects->at(i), e);
 
@@ -183,18 +184,18 @@ void CGameObject::PreventMoveX(float nx, LPGAMEOBJECT obj2)
 void CGameObject::PreventMoveY(LPGAMEOBJECT obj2)
 {
 	vy = 0;
-	y = obj2->y - (bottom - top);
+	y = obj2->y +(top - bottom);
 }
 
 void CGameObject::DeleteObjs(vector<LPGAMEOBJECT>* coObjects)
 {
 	isDead = true;
 	vector<LPGAMEOBJECT>* objs;
-	CGrid* grid;
+	//CGrid* grid;
 	objs = CGame::GetInstance()->GetCurrentScene()->GetObjs();
-	grid = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetGrid();
+	//grid = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetGrid();
 
-	for (int i = 0; i < this->listCellIndex.size(); i++)
+	/*for (int i = 0; i < this->listCellIndex.size(); i++)
 	{
 		int cellIndex = this->listCellIndex[i];
 		for (int k = 0; k < grid->listCells[cellIndex].listObj.size(); k++)
@@ -205,7 +206,7 @@ void CGameObject::DeleteObjs(vector<LPGAMEOBJECT>* coObjects)
 				break;
 			}
 		}
-	}
+	}*/
 	objs->erase(std::remove(objs->begin(), objs->end(), this), objs->end());
 	coObjects->erase(std::remove(coObjects->begin(), coObjects->end(), this), coObjects->end());
 	delete this;
@@ -373,7 +374,7 @@ void CGameObject::Alive()
 
 void CGameObject::RenderBoundingBox()
 {
-	D3DXVECTOR3 p(x, y, 0);
+	/*D3DXVECTOR3 p(x, y, 0);
 	RECT rect;
 
 	LPDIRECT3DTEXTURE9 bbox = CTextures::GetInstance()->Get(ID_TEX_BBOX);
@@ -384,9 +385,9 @@ void CGameObject::RenderBoundingBox()
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = (int)r - (int)l;
-	rect.bottom = (int)b - (int)t;
+	rect.bottom = (int)t - (int)b;
 
-	CGame::GetInstance()->Draw(l, t, bbox, rect.left, rect.top, rect.right, rect.bottom, 0, 0, xReverse, yReverse, 128);
+	CGame::GetInstance()->Draw(l, t, bbox, rect.left, rect.top, rect.right, rect.bottom, 0, 0, xReverse, yReverse, 128);*/
 }
 
 

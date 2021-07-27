@@ -9,18 +9,35 @@ CBlackMonster::CBlackMonster(float x)
 	vx = -BLACK_MONSTER_WALKING_SPEED;
 	SetBoundingBox();
 }
-
+CBlackMonster::CBlackMonster(float x, float y) {
+	CAnimationSets* animation_sets = CAnimationSets::GetInstance();
+	LPANIMATION_SET ani_set = animation_sets->Get(BLACKMONSTER_ANI_SET);
+	SetAnimationSet(ani_set);
+	SetRespawnPosition(x, y);
+	SetPosition(x, y);
+	start_x = x;
+	isOnWindow = true;
+	nx = -1;
+	SetState(BLACKMONSTER_STATE_WALKING);
+	vx = -BLACK_MONSTER_WALKING_SPEED/5;
+	SetBoundingBox();
+}
 void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
-	DebugOut(L"isOnGround: %d\n", isOnGround);
+	/*DebugOut(L"isOnGround: %d\n", isOnGround);*/
 	CEnemy::Update(dt, coObjects);
 	if (!isActive || isDead) return;
 
 	// Simple fall down
 	if (!CGame::GetInstance()->GetCurrentScene()->GetIsObjStop())
-		vy += ENEMY_GRAVITY * dt;
-
-	if (state != BLACKMONSTER_STATE_DIE)
+		vy -= ENEMY_GRAVITY * dt;
+	if (state == BLACKMONSTER_STATE_DIE_REVERSE && GetTickCount64() - die_start > BLACKMONSTER_DIE_TIME)
+	{
+		isDead = true;
+		DeleteObjs(coObjects);
+		return;
+	}
+	if (state != BLACKMONSTER_STATE_DIE_REVERSE)
 	{
 		CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
 		float distanceX = x - yumetaro->x;
@@ -31,13 +48,38 @@ void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			if (distanceX < 0)
 			{
 				nx = 1;
-				vx = nx * BLACK_MONSTER_WALKING_SPEED;
+				if (isOnWindow) {
+					vx = nx * BLACK_MONSTER_WALKING_SPEED/5;
+				}
+				else {
+					vx = nx * BLACK_MONSTER_WALKING_SPEED;
+				}
+			
 			}
 			else
 			{
 				nx = -1;
-				vx = nx * BLACK_MONSTER_WALKING_SPEED;
+				if (isOnWindow) {
+					vx = nx * BLACK_MONSTER_WALKING_SPEED / 5;
+				}
+				else {
+					vx = nx * BLACK_MONSTER_WALKING_SPEED;
+				}
+			
 			}
+		}
+
+		for (UINT i = 0; i < coObjects->size(); i++)
+		{
+			if (AABBCheck(this, coObjects->at(i)))
+			{
+				if (dynamic_cast<CSlopeBrick*>(coObjects->at(i)))
+				{
+					CSlopeBrick* brick = dynamic_cast<CSlopeBrick*>(coObjects->at(i));
+					brick->Collision(this, dy, dx);
+				}
+			}
+
 		}
 				
 		vector<LPCOLLISIONEVENT> coEvents;
@@ -45,15 +87,16 @@ void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		coEvents.clear();
 
 		CalcPotentialCollisions(coObjects, coEvents);
-
+		
 		// No collision occured, proceed normally
 		if (coEvents.size() == 0)
 		{
 			MoveThrough(OBJ_MOVE_XY);
-
 			if (vy != 0)
 			{
-				isOnGround = false;				
+				if (!isColSlopeBrick) {
+					isOnGround = false;
+				}
 			}
 		}
 		else 
@@ -72,13 +115,19 @@ void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				LPCOLLISIONEVENT e = coEventsResult[i];
 
 				// Stand-Y ground
-				if (ny < 0 && e->obj != NULL && !dynamic_cast<CEnemy*>(e->obj))
+				if (ny > 0 && e->obj != NULL && !dynamic_cast<CEnemy*>(e->obj) && !dynamic_cast<CSlopeBrick*>(e->obj))
 				{
 					if (nx == 0)
 					{
 						MoveThrough(OBJ_MOVE_X);
 					}
-
+					if (dynamic_cast<CCarousel*>(e->obj))
+					{
+						CCarousel* carousel = dynamic_cast<CCarousel*>(e->obj);
+						if (carousel->GetState() != NULL) {
+							x += carousel->GetBrickSpeed() * dt;
+						}
+					}
 					/*PreventMoveY(e->obj);*/
 					switch (state)
 					{
@@ -86,17 +135,47 @@ void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 						vy = 0;
 						break;
 					case BLACKMONSTER_STATE_JUMP:
-						if (vy > 0)
+						if (vy < 0)
 							SetState(BLACKMONSTER_STATE_WALKING);
 						break;
 					default:
 						break;
 					}
-					y = e->obj->y - (bottom - top);
+				
+					y = e->obj->y + (top - bottom);
+				}
+				else if (dynamic_cast<CSlopeBrick*>(e->obj))
+				{
+					/*vy = 0;*/
+					isColSlopeBrick = true;
+					MoveThrough(OBJ_MOVE_XY);
+					if (e->nx != 0)
+						x += dx;
+					else if (e->ny != 0)
+						y += dy;
+				}
+				else if (dynamic_cast<CEnemy*>(e->obj)) {
+					MoveThrough(OBJ_MOVE_X);
+				}
+				else if (dynamic_cast<CStar*>(e->obj)) {
+					MoveThrough(OBJ_MOVE_XY);
+				}
+				if (e->nx != 0)
+				{
+						// Ground
+						if (dynamic_cast<CGround*>(e->obj))
+						{
+							//PreventMoveX(nx, e->obj);
+							SetState(BLACKMONSTER_STATE_JUMP);
+						}
+						else if (dynamic_cast<CStar*>(e->obj)) {
+							MoveThrough(OBJ_MOVE_XY);
+						}
+
 				}
 
 				// Logic with jump
-				if (ny < 0 && vy >= 0)
+				if (ny > 0 && vy == 0)
 				{
 					isOnGround = true;					
 				}
@@ -109,53 +188,10 @@ void CBlackMonster::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				// If isDie, do not col-X
 				if (isDie)
 					return;
-
-				// Col-X
-				if (e->nx != 0)
-				{
-					// Ground
-					if (dynamic_cast<CGround*>(e->obj))
-					{
-						//PreventMoveX(nx, e->obj);
-						SetState(BLACKMONSTER_STATE_JUMP);
-					}
-					//// Goomba
-					//else if (dynamic_cast<CGoomba*>(e->obj))
-					//{
-					//	PreventMoveX(nx, e->obj);
-					//	vx = -vx;
-					//	e->obj->vx = -e->obj->vx;
-					//}
-					//// Koopas
-					//else if (dynamic_cast<CKoopas*>(e->obj))
-					//{
-					//	CKoopas* koopas = dynamic_cast<CKoopas*>(e->obj);
-					//	if (koopas->state != KOOPAS_STATE_SPIN && koopas->state != KOOPAS_STATE_HOLD)
-					//	{
-					//		PreventMoveX(nx, e->obj);
-					//		vx = -vx;
-					//		koopas->vx = -koopas->vx;
-					//	}
-					//}
-				}
 			}
 			// Clean up collision events
 			for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
 		}	
-
-		// Intersert with obj
-		/*for (int i = 0; i < coObjects->size(); i++)
-		{
-			if (!coObjects->at(i)->isDie)
-			{
-				if (this == coObjects->at(i))
-					continue;
-				if (AABBCheck(this, coObjects->at(i)))
-				{
-					OnIntersect(coObjects->at(i), coObjects);
-				}
-			}
-		}*/
 	}
 }
 
@@ -186,35 +222,38 @@ void CBlackMonster::SetState(int state)
 	if (state == ENEMY_STATE_RESPAWN)
 	{
 		CGameObject::SetState(BLACKMONSTER_STATE_WALKING);
-		vx = -((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer()->nx * BLACK_MONSTER_WALKING_SPEED;
-		wait_time = GetTickCount();
+		/*vx = -((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer()->nx * BLACK_MONSTER_WALKING_SPEED;
+		wait_time = GetTickCount64();*/
 		return;
 	}
 
 	CGameObject::SetState(state);
-	CYumetaro* yumetaro = ((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->GetPlayer();
-	float distanceX = x - yumetaro->x;
-	// Follow Yumetaro
-
-
-
 	switch (state)
 	{
-	case BLACKMONSTER_STATE_WALKING:		
-		vx = nx * BLACK_MONSTER_WALKING_SPEED;			
-		vy = 0;
-		break;
-	case BLACKMONSTER_STATE_JUMP:	
-		//vx = nx * vx;
-		if (isOnGround)
-		{
-			vy = -0.25f;
+	case BLACKMONSTER_STATE_WALKING:	
+		if (isOnWindow) {
+			vx = nx * BLACK_MONSTER_WALKING_SPEED / 5;
+			vy = 0;
+		}
+		else {
+			vx = nx * BLACK_MONSTER_WALKING_SPEED;
+			vy = 0;
 		}
 		break;
-	case BLACKMONSTER_STATE_DIE:
+	case BLACKMONSTER_STATE_JUMP:	
+	
+		if (isOnGround)
+		{
+			vy = 0.25f;
+		}
+		break;
+	case BLACKMONSTER_STATE_DIE_REVERSE:
 		AddPoint();
+		vx = 0;
+		vy = 0;
 		yReverse = true;
 		isDie = true;
+		die_start = GetTickCount64();
 		break;
 	default:
 		break;
@@ -236,7 +275,7 @@ void CBlackMonster::GetBoundingBox(float& l, float& t, float& r, float& b)
 	l = x;
 	t = y;
 	r = l + BLACKMONSTER_BBOX_WIDTH;
-	b = t + BLACKMONSTER_BBOX_HEIGHT;
+	b = t - BLACKMONSTER_BBOX_HEIGHT;
 
 	CGameObject::GetBoundingBox(l, t, r, b);
 }
@@ -246,5 +285,5 @@ void CBlackMonster::SetBoundingBox()
 	left = x;
 	top = y;
 	right = left + BLACKMONSTER_BBOX_WIDTH;
-	bottom = top + BLACKMONSTER_BBOX_HEIGHT;
+	bottom = top - BLACKMONSTER_BBOX_HEIGHT;
 }

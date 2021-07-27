@@ -12,7 +12,7 @@ CPortal::CPortal(float l, float t, int scene_id )
 	SetState(PORTAL_STATE_NORMAL);
 
 	congratSpr = CSprites::GetInstance()->Get(SPRITE_CONGRAT_ID);
-	change_start = GetTickCount();
+	change_start = GetTickCount64();
 
 	SetBoundingBox();
 }
@@ -24,7 +24,7 @@ void CPortal::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjs)
 	y += dy;
 
 	// Change cards
-	if (state == PORTAL_STATE_NORMAL && GetTickCount() - change_start > PORTAL_CHANGE_CARD_TIME)
+	if (state == PORTAL_STATE_NORMAL && GetTickCount64() - change_start > PORTAL_CHANGE_CARD_TIME)
 	{
 		if (idCard == SPRITE_CARD_MUSHROOM_ID)
 			idCard = SPRITE_CARD_STAR_ID;
@@ -32,7 +32,7 @@ void CPortal::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjs)
 			idCard = SPRITE_CARD_FLOWER_ID;
 		else if (idCard == SPRITE_CARD_FLOWER_ID)
 			idCard = SPRITE_CARD_MUSHROOM_ID;
-		change_start = GetTickCount();
+		change_start = GetTickCount64();
 	}
 
 	if (state == PORTAL_STATE_PICK_CARD)
@@ -43,7 +43,7 @@ void CPortal::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjs)
 		}
 	}
 
-	if (end_start != 0 && GetTickCount() - end_start > PORTAL_END_SCENE_TIME)
+	if (end_start != 0 && GetTickCount64() - end_start > PORTAL_END_SCENE_TIME)
 	{
 		CGame::GetInstance()->SwitchScene(scene_id);
 	}
@@ -104,7 +104,7 @@ void CPortal::SetState(int state)
 		cardSpr = CSprites::GetInstance()->Get(idCard);
 		CPlayerInfo::GetInstance()->AddCard(idCard);
 		((CPlayScene*)CGame::GetInstance()->GetCurrentScene())->EndScene();
-		end_start = GetTickCount();
+		end_start = GetTickCount64();
 		vy = 0;
 		break;
 	default:
@@ -118,7 +118,7 @@ void CPortal::GetBoundingBox(float &l, float &t, float &r, float &b)
 	l = x;
 	t = y;
 	r = x + PORTAL_BBOX_SIZE;
-	b = y + PORTAL_BBOX_SIZE;
+	b = y - PORTAL_BBOX_SIZE;
 
 	CGameObject::GetBoundingBox(left, top, right, bottom);
 }

@@ -20,7 +20,7 @@ CHud::CHud()
 	worldSpr = font->ToSprite(world + '0');
 	filledPowerArrowAni = CAnimations::GetInstance()->Get(ANIMATION_FILLED_POWER_ARROW_ID);
 
-	if (CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_1_1 || CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_1_4)
+	if (CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_1 || CGame::GetInstance()->GetCurrentScene()->GetSceneId() == MAP_2)
 		yumetaro = ((CPlayScene*)(CGame::GetInstance()->GetCurrentScene()))->GetPlayer();
 
 	for (int i = 0; i < MAX_POWER_STACK; i++)
@@ -71,7 +71,7 @@ void CHud::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		lifeStr = "0" + lifeStr;*/
 	lifeSpr = font->ToSprites(lifeStr);
 
-	string moneyStr = to_string(CPlayerInfo::GetInstance()->GetMoney());	
+	string moneyStr = to_string(CPlayerInfo::GetInstance()->GetMoney());
 	moneySpr = font->ToSprites(moneyStr);
 
 	string scoresStr = to_string(CPlayerInfo::GetInstance()->GetScore());
@@ -90,56 +90,56 @@ void CHud::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 void CHud::Render()
 {
-	background->DrawSprite(0, y);
-	hud->DrawSprite(x, y);
-	cardsHud->DrawSprite(x + CARDHUD_DISTANCE_X, y);
-	worldSpr->DrawSprite(x + WORLD_DISTANCE_X, y + HUD_DISTANCE_Y);
-	iconSpr->DrawSprite(x + ICON_DISTANCE_X, y + HUD_DISTANCE_Y_1);
+	background->DrawSprite(0, 768 - y);
+	hud->DrawSprite(x, 768 - y);
+	cardsHud->DrawSprite(x + CARDHUD_DISTANCE_X, 768 - y);
+	worldSpr->DrawSprite(x + WORLD_DISTANCE_X, 768 - y - HUD_DISTANCE_Y);
+	iconSpr->DrawSprite(x + ICON_DISTANCE_X, 768 - y - HUD_DISTANCE_Y_1);
 
 	for (int i = lifeSpr.size() - 1; i >= 0; i--)
 	{
-		lifeSpr[i]->DrawSprite(x + LIFE_DISTANCE_X - (lifeSpr.size() - i) * ITEM_DISTANCE, y + HUD_DISTANCE_Y_1);
+		lifeSpr[i]->DrawSprite(x + LIFE_DISTANCE_X - (lifeSpr.size() - i) * ITEM_DISTANCE,768 - y - HUD_DISTANCE_Y_1);
 	}
 
 	for (int i = 0; i < timeSpr.size(); i++)
 	{
-		timeSpr[i]->DrawSprite(x + TIME_DISTANCE_X + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y_1);
+		timeSpr[i]->DrawSprite(x + TIME_DISTANCE_X + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y_1);
 	}
 
 	for (int i = moneySpr.size() - 1; i >= 0; i--)
 	{
-		moneySpr[i]->DrawSprite(x + MONEY_DISTANCE_X - (moneySpr.size() - i) * ITEM_DISTANCE, y + HUD_DISTANCE_Y);
+		moneySpr[i]->DrawSprite(x + MONEY_DISTANCE_X - (moneySpr.size() - i) * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y);
 	}
 
 	for (int i = 0; i < scoresSpr.size(); i++)
 	{
-		scoresSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y_1);
+		scoresSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y_1);
 	}
 
 	for (int i = 0; i < powerSpr.size(); i++)
 	{
 		if (i < powerSpr.size() - 1)
-			powerSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y);
+			powerSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y);
 		else
-			powerSpr[i]->DrawSprite(x + HUD_DISTANCE_X_1 + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y);
+			powerSpr[i]->DrawSprite(x + HUD_DISTANCE_X_1 + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y);
 	}
 
 	for (int i = 0; i < power; i++)
 	{
 		if (i < filledPowerSpr.size() - 1)
-			filledPowerSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y);
+			filledPowerSpr[i]->DrawSprite(x + HUD_DISTANCE_X + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y);
 		else
 			/*filledPowerSpr[i]->DrawSprite(x + HUD_DISTANCE_X_1 + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y);*/
-			filledPowerArrowAni->Render(x + HUD_DISTANCE_X_1 + i * ITEM_DISTANCE, y + HUD_DISTANCE_Y, xReverse, yReverse, true);
+			filledPowerArrowAni->Render(x + HUD_DISTANCE_X_1 + i * ITEM_DISTANCE, 768 - y - HUD_DISTANCE_Y, xReverse, yReverse, true);
 	}
 
 	for (int i = 0; i < cardsSpr.size(); i++)
 	{
-		cardsSpr[i]->DrawSprite(x + CARD_DISTANCE_X + i * CARD_DISTANCE, y + HUD_DISTANCE_Y_2);
+		cardsSpr[i]->DrawSprite(x + CARD_DISTANCE_X + i * CARD_DISTANCE, 768 - y - HUD_DISTANCE_Y_2);
 	}
 
 	if (cardsAni != NULL)
-		cardsAni->Render(x + CARD_DISTANCE_X + (CPlayerInfo::GetInstance()->GetCards().size() - 1) * CARD_DISTANCE, y + HUD_DISTANCE_Y_2, xReverse, yReverse, true);
+		cardsAni->Render(x + CARD_DISTANCE_X + (CPlayerInfo::GetInstance()->GetCards().size() - 1) * CARD_DISTANCE, y - HUD_DISTANCE_Y_2, xReverse, yReverse, true);
 }
 
 void CHud::EndScene()

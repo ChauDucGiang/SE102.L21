@@ -39,7 +39,7 @@ CTileMap::CTileMap(int idTex, string txtMapPath)
 		left = xIndex * TILE_SIZE;
 		top = yIndex * TILE_SIZE;
 		// Create sprite with tiles from texture map
-		sprite = new CSprite(i, left, top, left + TILE_SIZE, top + TILE_SIZE, 0, 0, texture);
+		sprite = new CSprite(i, left, top, left + TILE_SIZE, top + TILE_SIZE, 0, 0, texture,true);
 		listSprites.push_back(sprite);
 	}
 }
@@ -56,7 +56,7 @@ void CTileMap::Render()
 	/*player->GetPosition(cx, cy);*/
 	CCamera::GetInstance()->GetPosition();
 	cx = CCamera::GetInstance()->GetPosition().x;
-	cy = CCamera::GetInstance()->GetPosition().y;
+	cy = 768 - CCamera::GetInstance()->GetPosition().y;
 	// Cal topleft and botright of camera
 	int xTopLeftCamera = cx - game->GetScreenWidth() / 2;
 	int yTopLeftCamera = cy - game->GetScreenHeight() / 2;

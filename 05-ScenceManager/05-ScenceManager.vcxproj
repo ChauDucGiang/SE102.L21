@@ -125,20 +125,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animations.cpp" />
+    <ClCompile Include="BallGun.cpp" />
     <ClCompile Include="BlackMonster.cpp" />
+    <ClCompile Include="BlackPipe.cpp" />
+    <ClCompile Include="Boss.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Carousel.cpp" />
+    <ClCompile Include="Elevator.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Ground.cpp" />
     <ClCompile Include="Hud.cpp" />
+    <ClCompile Include="PlatformsMoving.cpp" />
     <ClCompile Include="PlayerInfo.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Portal.cpp" />
+    <ClCompile Include="Quadtree.cpp" />
     <ClCompile Include="SlopeBrick.cpp" />
+    <ClCompile Include="Star.cpp" />
+    <ClCompile Include="TimeBomb.cpp" />
+    <ClCompile Include="Treasure.cpp" />
+    <ClCompile Include="TreasureTree.cpp" />
     <ClCompile Include="TileMap.cpp" />
+    <ClCompile Include="Tube.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -147,26 +158,42 @@
     <ClCompile Include="Scence.cpp" />
     <ClCompile Include="Sprites.cpp" />
     <ClCompile Include="Textures.cpp" />
+    <ClCompile Include="Water.cpp" />
+    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Worm.cpp" />
     <ClCompile Include="Yumetaro.cpp" />
+    <ClCompile Include="YumetaroDieEffect.cpp" />
+    <ClCompile Include="Zone.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animations.h" />
+    <ClInclude Include="BallGun.h" />
     <ClInclude Include="BlackMonster.h" />
+    <ClInclude Include="BlackPipe.h" />
+    <ClInclude Include="Boss.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Carousel.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Elevator.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Ground.h" />
     <ClInclude Include="Hud.h" />
+    <ClInclude Include="PlatformsMoving.h" />
     <ClInclude Include="PlayerInfo.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Portal.h" />
+    <ClInclude Include="Quadtree.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SlopeBrick.h" />
+    <ClInclude Include="Star.h" />
     <ClInclude Include="TileMap.h" />
+    <ClInclude Include="TimeBomb.h" />
+    <ClInclude Include="Treasure.h" />
+    <ClInclude Include="TreasureTree.h" />
+    <ClInclude Include="Tube.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameObject.h" />
@@ -175,7 +202,12 @@
     <ClInclude Include="Scence.h" />
     <ClInclude Include="Sprites.h" />
     <ClInclude Include="Textures.h" />
+    <ClInclude Include="Water.h" />
+    <ClInclude Include="Window.h" />
+    <ClInclude Include="Worm.h" />
     <ClInclude Include="Yumetaro.h" />
+    <ClInclude Include="YumetaroDieEffect.h" />
+    <ClInclude Include="Zone.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="05-ScenceManager.rc" />

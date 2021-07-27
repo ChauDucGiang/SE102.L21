@@ -2,7 +2,7 @@
 #include "Game.h"
 #include "Utils.h"
 
-CSprite::CSprite(int id, int left, int top, int right, int bottom, int xD, int yD, LPDIRECT3DTEXTURE9 tex)
+CSprite::CSprite(int id, int left, int top, int right, int bottom, int xD, int yD, LPDIRECT3DTEXTURE9 tex,bool isMap)
 {
 	this->id = id;
 	this->left = left;
@@ -12,6 +12,7 @@ CSprite::CSprite(int id, int left, int top, int right, int bottom, int xD, int y
 	this->texture = tex;
 	this->xD = xD;
 	this->yD = yD;
+	this->isMap = isMap;
 }
 
 CSprites * CSprites::__instance = NULL;
@@ -25,7 +26,12 @@ CSprites *CSprites::GetInstance()
 void CSprite::Draw(float x, float y, bool xReverse, bool yReverse, int alpha)
 {
 	CGame * game = CGame::GetInstance();
-	game->Draw(x, y, texture, left, top, right, bottom, xD, yD, xReverse, yReverse, alpha);
+	if (isMap) {
+		game->Draw(x, y, texture, left, top, right, bottom, xD, yD, xReverse, yReverse, alpha,true);
+	}
+	else {
+		game->Draw(x, y, texture, left, top, right, bottom, xD, yD, xReverse, yReverse, alpha,false);
+	}
 }
 
 void CSprite::DrawSprite(float x, float y, int alpha)

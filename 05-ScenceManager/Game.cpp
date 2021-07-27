@@ -64,56 +64,84 @@ void CGame::Init(HWND hWnd)
 /*
 	Utility function to wrap LPD3DXSPRITE::Draw
 */
-void CGame::Draw(float x, float y, LPDIRECT3DTEXTURE9 texture, int left, int top, int right, int bottom, int xD, int yD, bool xReverse, bool yReverse, int alpha)
+void CGame::Draw(float x, float y, LPDIRECT3DTEXTURE9 texture, int left, int top, int right, int bottom, int xD, int yD, bool xReverse, bool yReverse, int alpha,bool isMap)
 {
-	//D3DXVECTOR3 p(floor(x - cam_x), floor(y - cam_y), 0);
-	float xNew = floor(x - xD - CCamera::GetInstance()->GetPosition().x + GetScreenWidth() / 2);
-	float yNew = floor(y - yD - CCamera::GetInstance()->GetPosition().y + GetScreenHeight() / 2);
-	D3DXVECTOR3 p(xNew, yNew, 0);
+	if (isMap) {
+		float xNew = floor(x - xD - CCamera::GetInstance()->GetPosition().x + GetScreenWidth() / 2);
+		float yNew = floor(y - yD - (768 - CCamera::GetInstance()->GetPosition().y) + GetScreenHeight() / 2);
+		D3DXVECTOR3 p(xNew, yNew, 0);
 
-	RECT r;
-	r.left = left;
-	r.top = top;
-	r.right = right;
-	r.bottom = bottom;
+		RECT r;
+		r.left = left;
+		r.top = top;
+		r.right = right;
+		r.bottom = bottom;
 
-	if (xReverse || yReverse)
-	{
-		D3DXVECTOR2 scale;
-		float fx = 1, fy = 1;
-		if (xReverse)
-			fx = -1;
-		if (yReverse)
-			fy = -1;
-		scale = D3DXVECTOR2(fx, fy);
-		D3DXVECTOR2 center = D3DXVECTOR2(xNew + (right - left) / 2, yNew + (bottom - top) / 2);
-		D3DXMATRIX oldMatrix, newMatrix;
+		if (xReverse || yReverse)
+		{
+			D3DXVECTOR2 scale;
+			float fx = 1, fy = 1;
+			if (xReverse)
+				fx = -1;
+			if (yReverse)
+				fy = -1;
+			scale = D3DXVECTOR2(fx, fy);
+			D3DXVECTOR2 center = D3DXVECTOR2(xNew + (right - left) / 2, yNew + (bottom - top) / 2);
+			D3DXMATRIX oldMatrix, newMatrix;
 
-		spriteHandler->GetTransform(&oldMatrix);
+			spriteHandler->GetTransform(&oldMatrix);
 
-		D3DXMatrixTransformation2D(&newMatrix, &center, 0.0f, &scale, NULL, 0.0f, NULL);
+			D3DXMatrixTransformation2D(&newMatrix, &center, 0.0f, &scale, NULL, 0.0f, NULL);
 
-		spriteHandler->SetTransform(&newMatrix);
-		spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
-		spriteHandler->SetTransform(&oldMatrix);
+			spriteHandler->SetTransform(&newMatrix);
+			spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
+			spriteHandler->SetTransform(&oldMatrix);
+		}
+		else
+			spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
 	}
 	else
-		spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
-	/*{
-		D3DXVECTOR2 scale(1, 1);
-		D3DXMATRIX newMatrix;
-		D3DXVECTOR2 spritePosition = D3DXVECTOR2(xNew, yNew);
-		D3DXVECTOR2 center = D3DXVECTOR2(8, 8);
-		D3DXMatrixTransformation2D(&newMatrix, &center, 0.0f, &scale, NULL, 0.0f, &spritePosition);
+	{
+		float xNew = floor(x - xD - CCamera::GetInstance()->GetPosition().x + GetScreenWidth() / 2);
+		float yNew = -floor(y - yD - CCamera::GetInstance()->GetPosition().y - GetScreenHeight() / 2);
+		D3DXVECTOR3 p(xNew, yNew, 0);
 
-		spriteHandler->SetTransform(&newMatrix);
-		spriteHandler->Draw(texture, &r, NULL, NULL, D3DCOLOR_ARGB(alpha, 255, 255, 255));
-	}*/
+		RECT r;
+		r.left = left;
+		r.top = top;
+		r.right = right;
+		r.bottom = bottom;
+
+		if (xReverse || yReverse)
+		{
+			D3DXVECTOR2 scale;
+			float fx = 1, fy = 1;
+			if (xReverse)
+				fx = -1;
+			if (yReverse)
+				fy = -1;
+			scale = D3DXVECTOR2(fx, fy);
+			D3DXVECTOR2 center = D3DXVECTOR2(xNew + (right - left) / 2, yNew + (bottom - top) / 2);
+			D3DXMATRIX oldMatrix, newMatrix;
+
+			spriteHandler->GetTransform(&oldMatrix);
+
+			D3DXMatrixTransformation2D(&newMatrix, &center, 0.0f, &scale, NULL, 0.0f, NULL);
+
+			spriteHandler->SetTransform(&newMatrix);
+			spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
+			spriteHandler->SetTransform(&oldMatrix);
+		}
+		else
+			spriteHandler->Draw(texture, &r, NULL, &p, D3DCOLOR_ARGB(alpha, 255, 255, 255));
+	}
+	//D3DXVECTOR3 p(floor(x - cam_x), floor(y - cam_y), 0);
+	
 }
 
 void CGame::DrawSprite(float x, float y, LPDIRECT3DTEXTURE9 texture, int left, int top, int right, int bottom, int alpha)
 {
-	D3DXVECTOR3 p(x, y, 0);
+	D3DXVECTOR3 p(x, -y, 0);
 
 	RECT r;
 	r.left = left;
@@ -279,11 +307,11 @@ void CGame::SweptAABB(
 	//
 
 	float bl = dx > 0 ? ml : ml + dx;
-	float bt = dy > 0 ? mt : mt + dy;
+	float bt = dy > 0 ? mt + dy : mt;
 	float br = dx > 0 ? mr + dx : mr;
-	float bb = dy > 0 ? mb + dy : mb;
+	float bb = dy > 0 ? mb : mb + dy;
 
-	if (br < sl || bl > sr || bb < st || bt > sb) return;
+	if (br < sl || bl > sr || bb > st || bt < sb) return;
 
 
 	if (dx == 0 && dy == 0) return;		// moving object is not moving > obvious no collision
@@ -302,13 +330,13 @@ void CGame::SweptAABB(
 
 	if (dy > 0)
 	{
-		dy_entry = st - mb;
-		dy_exit = sb - mt;
+		dy_entry = sb - mt;
+		dy_exit = st - mb;
 	}
 	else if (dy < 0)
 	{
-		dy_entry = sb - mt;
-		dy_exit = st - mb;
+		dy_entry = st - mb;
+		dy_exit = sb - mt;
 	}
 
 	if (dx == 0)
@@ -359,7 +387,7 @@ void CGame::SweptAABB(
 bool CGame::AABBCheck(float left1, float top1, float right1, float bottom1, float left2, float top2, float right2, float bottom2)
 {
 	// return true nếu collision xảy ra
-	return !(right1 < left2 || left1 > right2 || bottom1 < top2 || top1 > bottom2);
+	return !(right1 < left2 || left1 > right2 || bottom1 > top2 || top1 < bottom2);
 }
 
 void CGame::CalcViewObjs(vector<LPGAMEOBJECT>* viewObjs, vector<LPGAMEOBJECT> objs)
@@ -440,7 +468,7 @@ void CGame::_ParseSection_SCENES(string line)
 	LPSCENE scene;
 	switch (id)
 	{	
-	case MAP_1_1: case MAP_1_4:
+	case MAP_1: case MAP_2:
 		scene = new CPlayScene(id, path);
 		break;	
 	default:

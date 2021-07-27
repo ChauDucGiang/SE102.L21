@@ -14,6 +14,7 @@ CBullet::CBullet()
 
 void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
+	DebugOut(L"[Bullet vx]: %f\n", vx);
 	CGameObject::Update(dt, coObjects);
 	UpdateDirection();
 
@@ -32,26 +33,28 @@ void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	int heightMap = camera->GetHeightMap();
 
 	// Bullet dead when col edge map or far from Mario
-	if (distanceX > SCREEN_WIDTH || distanceY > SCREEN_HEIGHT || x < leftMap || x + BULLET_BBOX_WIDTH > rightMap || y < topMap || y > topMap + heightMap)
+	/*if (distanceX > SCREEN_WIDTH || distanceY > SCREEN_HEIGHT || x < leftMap || x + BULLET_BBOX_WIDTH > rightMap || y < topMap || y > topMap + heightMap)
 	{
-		Dead();
+	
 		if (isEnemy)
 			DeleteFrontObjs(coObjects);
-	}
+	}*/
 	
 	// If not bullet of Piranha
 	if (!isEnemy)
 	{
 		if (state == BULLET_STATE_EXPLODE)
 		{
-			if (GetTickCount() - explode_start > BULLET_EXPLODE_TIME)
-				isDead = true;
+			if (GetTickCount64() - explode_start > BULLET_EXPLODE_TIME) {
+				/*Dead();*/
+				DeleteObjs(coObjects);
+			}
 			return;
 		}
 		
 		// Simple fall down
 		if (!CGame::GetInstance()->GetCurrentScene()->GetIsObjStop())
-			vy += BULLET_GRAVITY * dt;				
+			vy -= 2 * BULLET_GRAVITY * dt;				
 		
 		if (state != BULLET_STATE_EXPLODE)
 		{
@@ -62,10 +65,19 @@ void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 					continue;
 				if (AABBCheck(this, coObjects->at(i)))
 				{
+					if (dynamic_cast<CSlopeBrick*>(coObjects->at(i)))
+					{
+						CSlopeBrick* brick = dynamic_cast<CSlopeBrick*>(coObjects->at(i));
+						brick->Collision(this, dy, dx);
+					}
+					
 					OnIntersect(coObjects->at(i), coObjects);
 				}
 			}
-
+			if(state ==  BULLET_STATE_FIRE && GetTickCount64() - die_start > BULLET_DIE_TIME)
+			{
+				SetState(BULLET_STATE_EXPLODE);
+			}
 			vector<LPCOLLISIONEVENT> coEvents;
 			vector<LPCOLLISIONEVENT> coEventsResult;
 
@@ -87,7 +99,28 @@ void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			{
 				LPCOLLISIONEVENT e = coEventsResult[i];
 
-				
+				if (ny > 0 && e->obj != NULL && !dynamic_cast<CEnemy*>(e->obj) && !dynamic_cast<CSlopeBrick*>(e->obj) && !dynamic_cast<CWater*>(e->obj))
+				{
+					PreventMoveY(e->obj);
+					if (dynamic_cast<CGround*>(e->obj)) {
+						if (vx >= 0.015f) vx -= 0.0025f;
+						if (vx <= -0.015f) vx += 0.0025f;
+					}
+				}
+				else if (dynamic_cast<CSlopeBrick*>(e->obj))
+				{
+					/*vy = 0;*/
+					isColSlopeBrick = true;
+					//vx += 0.001f;
+					/*if (e->nx != 0)
+						vx += 0.001 * dt;
+					else if (e->ny != 0)
+						y += dy;*/
+				}
+				if (dynamic_cast<CWater*>(e->obj) && state == BULLET_STATE_FIRE) {
+					MoveThrough(OBJ_MOVE_Y);
+					
+				}
 			}
 
 			// clean up collision events
@@ -98,19 +131,21 @@ void CBullet::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 void CBullet::Render()
 {
-	int ani = BULLET_ANI_FIRE_RIGHT;
-
-	if (state == BULLET_STATE_FIRE) {
-		if (vx > 0) ani = BULLET_ANI_FIRE_RIGHT;
-		else if (vx <= 0) ani = BULLET_ANI_FIRE_LEFT;
-	}
-	if (state == BULLET_STATE_EXPLODE) {
+	int ani = BULLET_ANI_FIRE;
+	switch (state) {
+	case BULLET_STATE_FIRE:
+		ani = BULLET_ANI_FIRE;
+		break;
+	case BULLET_STATE_EXPLODE:
 		ani = BULLET_ANI_EXPLODE;
-	}
+		break;
+	default:
+		break;
 
+	}
 	animation_set->at(ani)->Render(x, y, xReverse, yReverse);
 
-	RenderBoundingBox();
+	//RenderBoundingBox();
 }
 
 void CBullet::SetState(int state)
@@ -121,19 +156,24 @@ void CBullet::SetState(int state)
 	case BULLET_STATE_FIRE:
 		isDie = false;
 		isDead = false;
+		die_start = GetTickCount64();
 		break;
 	case BULLET_STATE_EXPLODE:
 		vx = 0;
 		vy = 0;
 		isDie = true;
-		explode_start = GetTickCount();
+		explode_start = GetTickCount64();
 		break;		
 	}
 }
 
 void CBullet::OnIntersect(CGameObject* obj, vector<LPGAMEOBJECT>* coObjs)
 {
-	
+	if (!obj->isDie) {
+		if (dynamic_cast<CWater*>(obj)) {
+			SetState(BULLET_STATE_EXPLODE);
+		}
+	}
 }
 
 void CBullet::GetBoundingBox(float& left, float& top, float& right, float& bottom)
@@ -141,7 +181,7 @@ void CBullet::GetBoundingBox(float& left, float& top, float& right, float& botto
 	left = x;
 	top = y;
 	right = x + BULLET_BBOX_WIDTH;
-	bottom = y + BULLET_BBOX_HEIGHT;
+	bottom = y - BULLET_BBOX_HEIGHT;
 
 	CGameObject::GetBoundingBox(left, top, right, bottom);
 }
@@ -151,5 +191,5 @@ void CBullet::SetBoundingBox()
 	left = x;
 	top = y;
 	right = x + BULLET_BBOX_WIDTH;
-	bottom = y + BULLET_BBOX_HEIGHT;
+	bottom = y - BULLET_BBOX_HEIGHT;
 }
